@@ -79,13 +79,11 @@ EOF
     issue_number=$(echo "$jira_link" | grep -o -E '(browse/|selectedIssue=)[A-Z]+-[0-9]+' | grep -o '[A-Z]\+-[0-9]\+' | head -1)
 
     if [[ -z "$issue_number" ]]; then
-        echo "Error: Could not parse issue number from Jira link."
-        echo "Expected format: https://jira.company.com/browse/PROJ-123"
-        echo "            or: https://jira.atlassian.net/.../selectedIssue=PROJ-123"
-        return 1
+        echo "Warning: Could not parse issue number from Jira link. Using NOISSUE."
+        issue_number="NOISSUE"
+    else
+        echo "Parsed issue number: $issue_number"
     fi
-
-    echo "Parsed issue number: $issue_number"
     echo
 
     # -----------------------------
