@@ -105,7 +105,7 @@ EOF
     # -----------------------------
     # 4. Construct branch name
     # -----------------------------
-    local branch_name="feature/${team_name}/${issue_number}_${branch_title}"
+    local branch_name="feature/${team_name}/${issue_number}-${branch_title}"
     
     echo
     echo "Branch name: $branch_name"
