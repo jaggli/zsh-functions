@@ -2,7 +2,7 @@
 # If no commit message argument is given, prompt the user for one.
 commit() {
   local should_push=false
-  local msg=""
+  local msg_parts=()
 
   # Parse arguments
   while [[ $# -gt 0 ]]; do
@@ -24,18 +24,18 @@ Interactive mode (no message):
    1 file changed, 5 insertions(+), 2 deletions(-)
 
 With message argument:
-  $ commit "implement new feature"
+  $ commit implement new feature
   [main 5d6e7f8] implement new feature
    3 files changed, 42 insertions(+), 8 deletions(-)
 
 With push option:
-  $ commit "update documentation" -p
+  $ commit update documentation -p
   [main 9a8b7c6] update documentation
    1 file changed, 10 insertions(+), 3 deletions(-)
   Pushing 'main' to origin...
   ✓ Successfully pushed 'main' to origin.
 
-  $ commit -p "hotfix: critical bug"
+  $ commit -p hotfix: critical bug
   [main 3c2d1e0] hotfix: critical bug
    2 files changed, 15 insertions(+), 5 deletions(-)
   Pushing 'main' to origin...
@@ -43,9 +43,9 @@ With push option:
 
 Examples:
   commit                                    # Interactive mode
-  commit "add user validation"              # Quick commit
-  commit "refactor auth module" --push      # Commit and push
-  commit -p "update dependencies"           # Commit and push (short flag)
+  commit add user validation                # Quick commit
+  commit refactor auth module --push        # Commit and push
+  commit -p update dependencies             # Commit and push (short flag)
 
 EOF
         return 0
@@ -60,14 +60,15 @@ EOF
         return 1
         ;;
       *)
-        # If we haven't set a message yet, use this argument
-        if [[ -z "$msg" ]]; then
-          msg="$1"
-        fi
+        # Collect all non-flag arguments as message parts
+        msg_parts+=("$1")
         shift
         ;;
     esac
   done
+
+  # Join message parts with spaces
+  local msg="${msg_parts[*]}"
 
   # If no commit message was provided...
   if [ -z "$msg" ]; then
