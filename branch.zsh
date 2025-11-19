@@ -81,6 +81,12 @@ EOF
     if [[ -z "$issue_number" ]]; then
         echo "Warning: Could not parse issue number from Jira link. Using NOISSUE."
         issue_number="NOISSUE"
+        # If parsing failed and we had arguments, include the first arg in the title
+        if [[ -n "$branch_title" ]]; then
+            branch_title="$jira_link $branch_title"
+        else
+            branch_title="$jira_link"
+        fi
     else
         echo "Parsed issue number: $issue_number"
     fi
