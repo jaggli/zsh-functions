@@ -1,0 +1,126 @@
+branch() {
+    local team_name="helix"
+
+    # -----------------------------
+    # 0. Check for help flag
+    # -----------------------------
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+        cat << 'EOF'
+Usage: branch [JIRA_LINK] [TITLE...]
+
+Create a new git branch with the pattern: feature/helix/<ISSUE>-<title>
+
+Options:
+  -h, --help    Show this help message
+
+Interactive mode (no arguments):
+  $ branch
+  Enter Jira link (e.g., https://jira.company.com/browse/PROJ-123):
+  > https://jira.company.com/browse/LOVE-123
+  Parsed issue number: LOVE-123
+
+  Enter branch title (will be converted to lowercase with dashes):
+  > Fix Login Bug
+  
+  Branch name: feature/helix/LOVE-123-fix-login-bug
+  Create this branch? (y/N): y
+
+One-liner mode (with arguments):
+  $ branch https://jira.company.com/browse/LOVE-123 fix login bug
+  Parsed issue number: LOVE-123
+  
+  Branch name: feature/helix/LOVE-123-fix-login-bug
+  Create this branch? (y/N): y
+
+  $ branch LOVE-456 add user settings
+  Parsed issue number: LOVE-456
+  
+  Branch name: feature/helix/LOVE-456-add-user-settings
+  Create this branch? (y/N): y
+
+Examples:
+  branch https://jira.company.com/browse/PROJ-123 make some fixes
+  branch PROJ-456 implement new feature
+  branch https://company.atlassian.net/browse/ABC-789 refactor code
+
+EOF
+        return 0
+    fi
+
+    # -----------------------------
+    # 1. Get Jira link from user (or from arguments)
+    # -----------------------------
+    local jira_link
+    local branch_title
+    
+    if [[ -n "$1" ]]; then
+        # Arguments provided - use one-liner mode
+        jira_link="$1"
+        shift
+        # Join remaining arguments as title
+        branch_title="$*"
+    else
+        # Interactive mode
+        echo "Enter Jira link (e.g., https://jira.company.com/browse/PROJ-123):"
+        read "jira_link? > "
+    fi
+
+    if [[ -z "$jira_link" ]]; then
+        echo "Error: No Jira link provided."
+        return 1
+    fi
+
+    # -----------------------------
+    # 2. Parse issue number from Jira link
+    # -----------------------------
+    local issue_number
+    # Match patterns like PROJ-123, ABC-456, etc.
+    # Supports both /browse/PROJ-123 and selectedIssue=PROJ-123 formats
+    issue_number=$(echo "$jira_link" | grep -o -E '(browse/|selectedIssue=)[A-Z]+-[0-9]+' | grep -o '[A-Z]\+-[0-9]\+' | head -1)
+
+    if [[ -z "$issue_number" ]]; then
+        echo "Error: Could not parse issue number from Jira link."
+        echo "Expected format: https://jira.company.com/browse/PROJ-123"
+        echo "            or: https://jira.atlassian.net/.../selectedIssue=PROJ-123"
+        return 1
+    fi
+
+    echo "Parsed issue number: $issue_number"
+    echo
+
+    # -----------------------------
+    # 3. Get branch title from user (if not already provided)
+    # -----------------------------
+    if [[ -z "$branch_title" ]]; then
+        echo "Enter branch title (will be converted to lowercase with dashes):"
+        read "branch_title? > "
+    fi
+
+    if [[ -z "$branch_title" ]]; then
+        echo "Error: No branch title provided."
+        return 1
+    fi
+
+    # Convert title to lowercase and replace spaces/special chars with dashes
+    branch_title=$(echo "$branch_title" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+
+    # -----------------------------
+    # 4. Construct branch name
+    # -----------------------------
+    local branch_name="feature/${team_name}/${issue_number}_${branch_title}"
+    
+    echo
+    echo "Branch name: $branch_name"
+    echo
+
+    # -----------------------------
+    # 5. Create branch
+    # -----------------------------
+    echo "Creating branch..."
+    if git checkout -b "$branch_name"; then
+        echo "✓ Successfully created and switched to branch: $branch_name"
+    else
+        echo "✗ Failed to create branch."
+        return 1
+    fi
+}
