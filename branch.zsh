@@ -1,6 +1,4 @@
 branch() {
-    local team_name="helix"
-
     # -----------------------------
     # 0. Check for help flag
     # -----------------------------
@@ -16,26 +14,26 @@ Options:
 Interactive mode (no arguments):
   $ branch
   Enter Jira link (e.g., https://jira.company.com/browse/PROJ-123):
-  > https://jira.company.com/browse/LOVE-123
-  Parsed issue number: LOVE-123
+  > https://jira.company.com/browse/PROJ-123
+  Parsed issue number: PROJ-123
 
   Enter branch title (will be converted to lowercase with dashes):
   > Fix Login Bug
   
-  Branch name: feature/helix/LOVE-123-fix-login-bug
+  Branch name: feature/helix/PROJ-123-fix-login-bug
   Create this branch? (y/N): y
 
 One-liner mode (with arguments):
-  $ branch https://jira.company.com/browse/LOVE-123 fix login bug
-  Parsed issue number: LOVE-123
+  $ branch https://jira.company.com/browse/PROJ-123 fix login bug
+  Parsed issue number: PROJ-123
   
-  Branch name: feature/helix/LOVE-123-fix-login-bug
+  Branch name: feature/helix/PROJ-123-fix-login-bug
   Create this branch? (y/N): y
 
-  $ branch LOVE-456 add user settings
-  Parsed issue number: LOVE-456
+  $ branch PROJ-456 add user settings
+  Parsed issue number: PROJ-456
   
-  Branch name: feature/helix/LOVE-456-add-user-settings
+  Branch name: feature/helix/PROJ-456-add-user-settings
   Create this branch? (y/N): y
 
 Examples:
@@ -111,7 +109,7 @@ EOF
     # -----------------------------
     # 4. Construct branch name
     # -----------------------------
-    local branch_name="feature/${team_name}/${issue_number}-${branch_title}"
+    local branch_name="${branch_prefix}${issue_number}-${branch_title}"
     
     echo
     echo "Branch name: $branch_name"

@@ -1,6 +1,6 @@
 # Update the current branch with the latest version of master/main
 update() {
-  local merge_tool="fork"  # Git client to open for merge conflict resolution
+  local merge_tool="${ZSH_FUNCTIONS_FEATURE_BRANCH_PREFIX:-}"
   local should_push=false
 
   # Parse arguments
@@ -21,7 +21,7 @@ Behavior:
   2. Fetches the latest base branch from origin
   3. Merges it into your current branch
   4. Optionally pushes the updated branch to origin
-  5. Opens merge tool (fork) if conflicts occur
+  5. Opens merge tool if conflicts occur
 
 Examples:
   $ git checkout feature/helix/LOVE-123-new-feature
@@ -45,12 +45,11 @@ Examples:
   Fetching latest 'main' from origin...
   Merging updated 'main' into 'feature/dev-branch'...
   ⚠ Merge completed with conflicts. Resolve them manually.
-  # Opens Fork (or configured merge tool) for conflict resolution
+  # Opens configured merge tool for conflict resolution
 
 Configuration:
-  - Merge tool can be changed by editing the 'merge_tool' variable
-  - Default: "fork"
-  - Alternatives: "code", "gitkraken", "gitk", etc.
+  - Merge tool can be changed by editing the 'ZSH_FUNCTIONS_GIT_MERGE_COMMAND' variable
+  - Options: "fork", "code", "gitkraken", "gitk", etc.
 
 Requirements:
   - Must be in a git repository
