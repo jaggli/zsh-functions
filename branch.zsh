@@ -6,10 +6,14 @@ branch() {
         cat << 'EOF'
 Usage: branch [JIRA_LINK] [TITLE...]
 
-Create a new git branch with the pattern: feature/helix/<ISSUE>-<title>
+Create a new git branch with the pattern: feature/<ISSUE>-<title>
 
 Options:
   -h, --help    Show this help message
+
+Configuration:
+  - Branch prefix can be changed by editing the 'ZSH_FUNCTIONS_FEATURE_BRANCH_PREFIX' variable
+  - Default: "feature/"
 
 Interactive mode (no arguments):
   $ branch
@@ -20,20 +24,20 @@ Interactive mode (no arguments):
   Enter branch title (will be converted to lowercase with dashes):
   > Fix Login Bug
   
-  Branch name: feature/helix/PROJ-123-fix-login-bug
+  Branch name: feature/PROJ-123-fix-login-bug
   Create this branch? (y/N): y
 
 One-liner mode (with arguments):
   $ branch https://jira.company.com/browse/PROJ-123 fix login bug
   Parsed issue number: PROJ-123
   
-  Branch name: feature/helix/PROJ-123-fix-login-bug
+  Branch name: feature/PROJ-123-fix-login-bug
   Create this branch? (y/N): y
 
   $ branch PROJ-456 add user settings
   Parsed issue number: PROJ-456
   
-  Branch name: feature/helix/PROJ-456-add-user-settings
+  Branch name: feature/PROJ-456-add-user-settings
   Create this branch? (y/N): y
 
 Examples:
@@ -109,6 +113,7 @@ EOF
     # -----------------------------
     # 4. Construct branch name
     # -----------------------------
+    local branch_prefix="${ZSH_FUNCTIONS_FEATURE_BRANCH_PREFIX:-feature/}"
     local branch_name="${branch_prefix}${issue_number}-${branch_title}"
     
     echo

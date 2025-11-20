@@ -16,6 +16,10 @@ Options:
   -p, --push    Push to origin after successful merge
   -h, --help    Show this help message
 
+Configuration:
+  - Merge tool can be set by editing the 'ZSH_FUNCTIONS_GIT_MERGE_COMMAND' variable
+  - Default: "fork" 
+
 Behavior:
   1. Detects whether your repo uses 'main' or 'master'
   2. Fetches the latest base branch from origin
