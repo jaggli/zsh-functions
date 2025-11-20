@@ -1,6 +1,6 @@
 # zsh-functions
 
-A collection of powerful zsh utilities to streamline your git workflow. These functions provide interactive, user-friendly interfaces for common git operations with smart defaults and helpful prompts.
+A collection of powerful zsh utilities to streamline your git/GitHub workflow. These functions provide interactive, user-friendly interfaces for common git operations with smart defaults and helpful prompts.
 
 ## Table of Contents
 
@@ -18,7 +18,9 @@ A collection of powerful zsh utilities to streamline your git workflow. These fu
 
 ## Installation
 
-Clone the repository:
+Make sure [`fzf`](https://github.com/junegunn/fzf) is installed on your system
+
+Clone the repository
 
 ```bash
 mkdir -p ~/.config/zsh && git clone git@github.com:jaggli/zsh-functions.git ~/.config/zsh/zsh-functions
