@@ -28,20 +28,20 @@ Behavior:
   5. Opens merge tool if conflicts occur
 
 Examples:
-  $ git checkout feature/helix/LOVE-123-new-feature
+  $ git checkout feature/LOVE-123-new-feature
   $ update
   Fetching latest 'main' from origin...
-  Merging updated 'main' into 'feature/helix/LOVE-123-new-feature'...
-  ✓ 'feature/helix/LOVE-123-new-feature' is now up-to-date with 'main'.
+  Merging updated 'main' into 'feature/LOVE-123-new-feature'...
+  ✓ 'feature/LOVE-123-new-feature' is now up-to-date with 'main'.
 
   ---
 
   $ update --push
   Fetching latest 'main' from origin...
-  Merging updated 'main' into 'feature/helix/LOVE-123-new-feature'...
-  ✓ 'feature/helix/LOVE-123-new-feature' is now up-to-date with 'main'.
-  Pushing 'feature/helix/LOVE-123-new-feature' to origin...
-  ✓ Successfully pushed 'feature/helix/LOVE-123-new-feature' to origin.
+  Merging updated 'main' into 'feature/LOVE-123-new-feature'...
+  ✓ 'feature/LOVE-123-new-feature' is now up-to-date with 'main'.
+  Pushing 'feature/LOVE-123-new-feature' to origin...
+  ✓ Successfully pushed 'feature/LOVE-123-new-feature' to origin.
 
   ---
 
