@@ -192,16 +192,18 @@ Open the current branch's pull request in your browser.
 **Usage:**
 
 ```bash
-pr
+pr [OPTIONS]
 ```
 
 **Options:**
 
+- `-p, --push` - Push current branch to origin before opening PR
 - `-h, --help` - Show help message
 
 **Features:**
 
 - Opens existing PR or GitHub's compare page to create one
+- Optional push before opening PR URL
 - Works with both SSH and HTTPS remote URLs
 - Automatically URL-encodes branch names
 - Opens in your default browser
@@ -215,6 +217,12 @@ $ pr
 $ git checkout feature/helix/LOVE-123-fix-bug
 $ pr
 # Opens: https://github.com/user/repo/compare/feature/helix/LOVE-123-fix-bug?expand=1
+
+# Push before opening PR
+$ pr -p
+Pushing 'feature-branch' to origin...
+✓ Successfully pushed 'feature-branch' to origin.
+# Opens: https://github.com/user/repo/compare/feature-branch?expand=1
 ```
 
 **Requirements:**

@@ -1,14 +1,19 @@
 ## pr opens the current pr, if in repo
 pr() {
-  # Check for help flag
-  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    cat << 'EOF'
+  local should_push=false
+
+  # Parse arguments
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -h|--help)
+        cat << 'EOF'
 Usage: pr [OPTIONS]
 
 Open the current branch's pull request in your browser.
 If no PR exists, opens GitHub's compare page to create one.
 
 Options:
+  -p, --push    Push current branch to origin before opening PR
   -h, --help    Show this help message
 
 Behavior:
@@ -25,9 +30,11 @@ Examples:
   $ pr
   # Opens: https://github.com/user/repo/compare/feature/helix/LOVE-123-fix-bug?expand=1
 
-  $ pr
-  Not inside a git repository.
-  # Error: not in a git repo
+  # Push before opening PR
+  $ pr -p
+  Pushing 'feature-branch' to origin...
+  ✓ Successfully pushed 'feature-branch' to origin.
+  # Opens: https://github.com/user/repo/compare/feature-branch?expand=1
 
 Notes:
   - Works with both SSH and HTTPS remote URLs
@@ -35,8 +42,24 @@ Notes:
   - Branch name is automatically URL-encoded by the browser
 
 EOF
-    return 0
-  fi
+        return 0
+        ;;
+      -p|--push)
+        should_push=true
+        shift
+        ;;
+      -*)
+        echo "Unknown option: $1"
+        echo "Usage: pr [-p|--push]"
+        return 1
+        ;;
+      *)
+        echo "Unknown argument: $1"
+        echo "Usage: pr [-p|--push]"
+        return 1
+        ;;
+    esac
+  done
 
   # Ensure we're inside a Git repo
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -59,6 +82,18 @@ EOF
 
   # Current branch
   branch=$(git rev-parse --abbrev-ref HEAD)
+
+  # Push if requested
+  if [[ "$should_push" == true ]]; then
+    echo "Pushing '$branch' to origin..."
+    git push origin "$branch"
+    if [[ $? -eq 0 ]]; then
+      echo "✓ Successfully pushed '$branch' to origin."
+    else
+      echo "⚠ Failed to push '$branch' to origin."
+      return 1
+    fi
+  fi
 
   # Construct compare URL
   url="$remote_https/compare/$branch?expand=1"
