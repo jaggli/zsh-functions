@@ -121,13 +121,47 @@ EOF
     echo
 
     # -----------------------------
-    # 5. Create branch
+    # 5. Update main/master branch before creating new branch
+    # -----------------------------
+    # Detect base branch: main or master
+    local base_branch
+    if git show-ref --verify --quiet refs/heads/main; then
+        base_branch="main"
+    elif git show-ref --verify --quiet refs/heads/master; then
+        base_branch="master"
+    else
+        echo "⚠ Could not detect 'main' or 'master' branch. Creating branch from current HEAD."
+        base_branch=""
+    fi
+
+    if [[ -n "$base_branch" ]]; then
+        echo "Updating '$base_branch' from origin..."
+        if git fetch origin "$base_branch:$base_branch" 2>/dev/null; then
+            echo "✓ '$base_branch' is up to date."
+        else
+            echo "⚠ Could not update '$base_branch' from origin. Creating branch from local '$base_branch'."
+        fi
+    fi
+
+    # -----------------------------
+    # 6. Create branch
     # -----------------------------
     echo "Creating branch..."
-    if git checkout -b "$branch_name"; then
-        echo "✓ Successfully created and switched to branch: $branch_name"
+    if [[ -n "$base_branch" ]]; then
+        # Create branch from updated base branch
+        if git checkout -b "$branch_name" "$base_branch"; then
+            echo "✓ Successfully created and switched to branch: $branch_name (from $base_branch)"
+        else
+            echo "✗ Failed to create branch."
+            return 1
+        fi
     else
-        echo "✗ Failed to create branch."
-        return 1
+        # Fallback: create from current HEAD
+        if git checkout -b "$branch_name"; then
+            echo "✓ Successfully created and switched to branch: $branch_name"
+        else
+            echo "✗ Failed to create branch."
+            return 1
+        fi
     fi
 }
