@@ -8,7 +8,9 @@ A collection of powerful zsh utilities to streamline your git/GitHub workflow. T
 - [Configuration](#configuration)
 - [Commands](#commands)
   - [branch](#branch)
+  - [switch](#switch)
   - [commit](#commit)
+  - [status](#status)
   - [pr](#pr)
   - [update](#update)
   - [stash](#stash)
@@ -132,9 +134,77 @@ Branch name: feature/NOISSUE-stay-logged-in-in-github
 
 ---
 
+### switch
+
+Select and switch to a git branch using fzf with interactive preview.
+
+**Usage:**
+
+```bash
+switch
+```
+
+**Options:**
+
+- `-h, --help` - Show help message
+
+**Features:**
+
+- Lists both local and remote branches
+- Interactive selection with fzf
+- Live preview showing latest commit info and history
+- Automatically switches to selected branch
+- For remote branches, creates local tracking branch if needed
+- Shows current branch in header
+
+**Examples:**
+
+```bash
+$ switch
+# Opens fzf selector showing:
+Select branch: 
+Current: main
+> local: main
+  local: feature/PROJ-123-new-feature
+  remote: origin/develop
+  remote: origin/feature/PROJ-456-another-feature
+
+# Preview shows:
+Author: John Doe
+Date: 2 hours ago (2025-11-24 14:30)
+Message: Add new feature
+
+a1b2c3d Fix bug in authentication
+e4f5g6h Update documentation
+...
+
+# Select with Enter, automatically switches to branch
+✓ Successfully switched to branch: feature/PROJ-123-new-feature
+```
+
+**Preview Information:**
+
+- **Author** - Latest committer on the branch
+- **Date** - Relative time and absolute timestamp
+- **Message** - Latest commit message
+- **History** - Last 10 commits in oneline format
+
+**Remote Branch Handling:**
+
+- If local tracking branch exists → switches to it
+- If no local branch exists → creates and tracks remote branch
+- Automatically removes `origin/` prefix from branch name
+
+**Requirements:**
+
+- Must be in a git repository
+- `fzf` (fuzzy finder) - will prompt to install if not found
+
+---
+
 ### commit
 
-Stage all changes and commit with a message. Optionally push to origin.
+Stage changes and commit with a message. Optionally push to origin.
 
 **Usage:**
 
@@ -149,10 +219,16 @@ commit [MESSAGE] [OPTIONS]
 
 **Features:**
 
-- Automatically stages all changes (`git add -A`)
+- Smart staging detection - asks if both staged and unstaged changes exist
 - No quotes needed for commit messages
 - Optional push in one command
 - Interactive mode if no message provided
+
+**Staging Behavior:**
+
+- **Both staged and unstaged changes** → Asks whether to commit staged only or all
+- **Only staged changes** → Commits staged changes
+- **No staged changes** → Stages all and commits (classic behavior)
 
 **Examples:**
 
@@ -168,6 +244,18 @@ $ commit implement new feature
 [main 5d6e7f8] implement new feature
  3 files changed, 42 insertions(+), 8 deletions(-)
 
+# With both staged and unstaged changes
+$ git add src/app.js
+$ # Modified other files too
+$ commit fix authentication
+
+You have both staged and unstaged changes.
+
+Commit [s]taged only, or [a]ll changes? (s/a): s
+Committing staged changes only...
+[main 7h8i9j0] fix authentication
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
 # Commit and push
 $ commit update documentation -p
 [main 9a8b7c6] update documentation
@@ -182,6 +270,134 @@ $ commit -p hotfix: critical bug
 Pushing 'main' to origin...
 ✓ Successfully pushed 'main' to origin.
 ```
+
+**Workflow Integration:**
+
+Works great with the [`status`](#status) command for selective staging:
+
+```bash
+$ status          # Interactively stage files
+$ commit fix bug  # Commits only what you staged
+```
+
+---
+
+### status
+
+Interactive git status viewer with fzf for managing staged and unstaged changes.
+
+**Usage:**
+
+```bash
+status
+```
+
+**Options:**
+
+- `-h, --help` - Show help message
+
+**Features:**
+
+- Lists all modified, staged, and untracked files
+- Interactive file navigation with fzf
+- Live diff preview with syntax highlighting (uses delta if available)
+- Toggle staging by pressing Enter on any file
+- Continuous loop for staging multiple files
+- Shows staging status next to each file
+
+**File Status Indicators:**
+
+- `[STAGED]` - File is staged for commit
+- `[UNSTAGED]` - File has unstaged changes
+- `[UNTRACKED]` - File is not tracked by git
+
+**Examples:**
+
+```bash
+$ status
+Git Status > 
+Enter: toggle stage | ESC: exit
+> [UNSTAGED]   M  src/app.js
+  [STAGED]     A  src/new-feature.js
+  [UNTRACKED]  ?? temp.txt
+  [UNSTAGED]   M  README.md
+
+# Preview shows diff for selected file:
+=== UNSTAGED CHANGES ===
+
+- const user = getUser();
++ const user = await getUser();
++ const profile = await getProfile(user.id);
+
+# Press Enter to stage src/app.js
+Staging: src/app.js
+
+# Status refreshes automatically
+> [STAGED]     M  src/app.js
+  [STAGED]     A  src/new-feature.js
+  [UNTRACKED]  ?? temp.txt
+  [UNSTAGED]   M  README.md
+
+# Press Enter again to unstage
+Unstaging: src/app.js
+
+# Press ESC to exit
+Exited status viewer.
+```
+
+**Navigation:**
+
+- `↑/↓` or `j/k` - Navigate through files
+- `Enter` - Toggle staging for selected file
+- `ESC/Ctrl-C` - Exit the viewer
+
+**Preview Types:**
+
+- **Staged files** - Shows cached diff (and unstaged changes if any)
+- **Unstaged files** - Shows working tree diff with syntax highlighting
+- **Untracked files** - Shows file contents (uses `bat` if available)
+
+**Toggle Actions:**
+
+- `[STAGED]` → unstaged with `git reset HEAD <file>`
+- `[UNSTAGED]` → staged with `git add <file>`
+- `[UNTRACKED]` → added with `git add <file>`
+
+**Syntax Highlighting:**
+
+- Uses `delta` for enhanced diff highlighting if installed
+- Falls back to standard git colored diff
+- Uses `bat` for untracked file preview if available
+
+**Requirements:**
+
+- Must be in a git repository
+- `fzf` (fuzzy finder) - will prompt to install if not found
+
+**Recommended:**
+
+- `delta` - Enhanced diff syntax highlighting (`brew install git-delta`)
+- `bat` - Better file preview (`brew install bat`)
+
+**Workflow Example:**
+
+```bash
+# Review and selectively stage changes
+$ status
+# Navigate and press Enter to stage desired files
+# Press ESC when done
+
+# Commit only what you staged
+$ commit fix: update user authentication logic
+```
+
+---
+
+### commit
+
+Stage all changes and commit with a message. Optionally push to origin.
+
+
 
 ---
 
@@ -478,10 +694,14 @@ Dropping stash@{0} ...
 
 ### Optional
 
-- **fzf** - Fuzzy finder for interactive menus (required for `stash`, `unstash`, `cleanstash`)
+- **fzf** - Fuzzy finder for interactive menus (required for `switch`, `status`, `stash`, `unstash`, `cleanstash`)
   - Install with: `brew install fzf`
-  - Auto-install prompt included in stash commands
-- **Homebrew** - For automatic fzf installation on macOS
+  - Auto-install prompt included in commands that require it
+- **delta** - Enhanced diff syntax highlighting (recommended for `status`)
+  - Install with: `brew install git-delta`
+- **bat** - Better file preview with syntax highlighting (recommended for `status`)
+  - Install with: `brew install bat`
+- **Homebrew** - For automatic installation of optional dependencies on macOS
 
 ### Recommended
 
@@ -498,6 +718,8 @@ Add these to your `~/.zshrc` for even faster workflows:
 
 ```bash
 alias b='branch'
+alias s='switch'
+alias st='status'
 alias c='commit'
 alias cp='commit -p'
 alias u='update'
@@ -512,14 +734,22 @@ $ branch PROJ-123 add user authentication
 
 # Make your changes...
 
-# Commit and push
-$ commit -p implement login form
+# Review and selectively stage changes
+$ status
+# Press Enter to toggle staging, ESC to exit
+
+# Commit staged changes
+$ commit implement login form
+
+# Or commit and push everything
+$ commit -p add validation
 
 # Keep branch up to date with main
 $ update
 
-# More changes...
-$ commit -p add validation
+# Switch between branches easily
+$ switch
+# Use arrow keys to select, preview shows commit history
 
 # Open PR when ready
 $ pr

@@ -212,5 +212,11 @@ EOF
       echo "✓ Working tree is now clean - all changes staged or reverted."
       break
     fi
+
+    # Check if everything is staged (no unstaged or untracked files)
+    if ! echo "$status_output" | grep -q '\[UNSTAGED\]\|\[UNTRACKED\]'; then
+      echo "✓ All changes are staged."
+      break
+    fi
   done
 }
