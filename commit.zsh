@@ -76,8 +76,40 @@ EOF
     read -rp "Commit message: " msg
   fi
 
-  # Stage all changes and commit with the final message
-  git add -A && git commit -m "$msg"
+  # Check if there are staged changes
+  local has_staged
+  has_staged=$(git diff --cached --name-only)
+  
+  local has_unstaged
+  has_unstaged=$(git diff --name-only)
+
+  # If there are both staged and unstaged changes, ask what to commit
+  if [[ -n "$has_staged" && -n "$has_unstaged" ]]; then
+    echo
+    echo "You have both staged and unstaged changes."
+    echo
+    read "commit_choice?Commit [s]taged only, or [a]ll changes? (s/a): "
+    
+    case "$commit_choice" in
+      [sS])
+        # Commit only staged changes
+        echo "Committing staged changes only..."
+        git commit -m "$msg"
+        ;;
+      [aA]|*)
+        # Stage all and commit
+        echo "Staging all changes and committing..."
+        git add -A && git commit -m "$msg"
+        ;;
+    esac
+  elif [[ -n "$has_staged" ]]; then
+    # Only staged changes exist
+    echo "Committing staged changes..."
+    git commit -m "$msg"
+  else
+    # No staged changes, stage all and commit
+    git add -A && git commit -m "$msg"
+  fi
 
   # Push if requested and commit was successful
   if [[ $? -eq 0 && "$should_push" == true ]]; then
