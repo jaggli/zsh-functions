@@ -219,7 +219,7 @@ switch
 ```bash
 $ switch
 # Opens fzf selector showing:
-Select branch: 
+Select branch:
 Current: main
 > local: main
   local: feature/PROJ-123-new-feature
@@ -372,7 +372,7 @@ status
 
 ```bash
 $ status
-Git Status > 
+Git Status >
 Enter: toggle stage | ESC: exit
 > [UNSTAGED]   M  src/app.js
   [STAGED]     A  src/new-feature.js
@@ -453,8 +453,6 @@ $ commit fix: update user authentication logic
 ### commit
 
 Stage all changes and commit with a message. Optionally push to origin.
-
-
 
 ---
 
