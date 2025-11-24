@@ -164,4 +164,14 @@ EOF
             return 1
         fi
     fi
+
+    # -----------------------------
+    # 7. Push branch to origin and set up tracking
+    # -----------------------------
+    echo "Pushing branch to origin and setting up tracking..."
+    if git push -u origin "$branch_name"; then
+        echo "✓ Successfully pushed '$branch_name' to origin with tracking."
+    else
+        echo "⚠ Failed to push branch to origin. You can push it later with: git push -u origin $branch_name"
+    fi
 }
