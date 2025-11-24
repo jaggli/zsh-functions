@@ -7,7 +7,7 @@ A collection of powerful zsh utilities to streamline your git/GitHub workflow. T
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Commands](#commands)
-  - [branch](#branch)
+  - [create](#create)
   - [switch](#switch)
   - [commit](#commit)
   - [status](#status)
@@ -73,14 +73,14 @@ export ZSH_FUNCTIONS_GIT_MERGE_COMMAND="gitkraken"
 
 ## Commands
 
-### branch
+### create
 
-Create a new git branch with automatic Jira issue parsing and smart naming.
+Create a new git branch with automatic Jira issue parsing and smart naming. Automatically updates main/master from origin before creating the branch.
 
 **Usage:**
 
 ```bash
-branch [JIRA_LINK] [TITLE...]
+create [JIRA_LINK] [TITLE...]
 ```
 
 **Options:**
@@ -89,17 +89,19 @@ branch [JIRA_LINK] [TITLE...]
 
 **Features:**
 
+- Updates main/master from origin before creating branch
 - Parses Jira issue numbers from URLs automatically
 - Falls back to `NOISSUE` if no issue number is found
 - Converts titles to lowercase with dashes
 - Supports both interactive and one-liner modes
 - Automatically switches to the new branch
+- Creates branch from latest main/master commit
 
 **Examples:**
 
 ```bash
 # Interactive mode
-$ branch
+$ create
 Enter Jira link (e.g., https://jira.company.com/browse/PROJ-123):
 > https://jira.company.com/browse/LOVE-123
 Parsed issue number: LOVE-123
@@ -108,19 +110,26 @@ Enter branch title (will be converted to lowercase with dashes):
 > Fix Login Bug
 
 Branch name: feature/LOVE-123-fix-login-bug
+Updating 'main' from origin...
+✓ 'main' is up to date.
+Creating branch...
+✓ Successfully created and switched to branch: feature/LOVE-123-fix-login-bug (from main)
 
 # One-liner with Jira URL
-$ branch https://jira.company.com/browse/LOVE-123 fix login bug
+$ create https://jira.company.com/browse/LOVE-123 fix login bug
 Parsed issue number: LOVE-123
 Branch name: feature/LOVE-123-fix-login-bug
+Updating 'main' from origin...
+✓ 'main' is up to date.
+✓ Successfully created and switched to branch: feature/LOVE-123-fix-login-bug (from main)
 
 # One-liner with just issue number
-$ branch PROJ-456 implement new feature
+$ create PROJ-456 implement new feature
 Parsed issue number: PROJ-456
 Branch name: feature/PROJ-456-implement-new-feature
 
 # Without Jira issue (uses NOISSUE)
-$ branch stay logged in in github
+$ create stay logged in in github
 Warning: Could not parse issue number from Jira link. Using NOISSUE.
 Branch name: feature/NOISSUE-stay-logged-in-in-github
 ```
@@ -717,8 +726,8 @@ Dropping stash@{0} ...
 Add these to your `~/.zshrc` for even faster workflows:
 
 ```bash
-alias b='branch'
-alias s='switch'
+alias cr='create'
+alias sw='switch'
 alias st='status'
 alias c='commit'
 alias cp='commit -p'
@@ -729,8 +738,11 @@ alias up='update -p'
 ### Workflow Example
 
 ```bash
-# Create a new feature branch
-$ branch PROJ-123 add user authentication
+# Create a new feature branch (automatically updates main/master first)
+$ create PROJ-123 add user authentication
+Updating 'main' from origin...
+✓ 'main' is up to date.
+✓ Successfully created and switched to branch: feature/PROJ-123-add-user-authentication (from main)
 
 # Make your changes...
 

@@ -1,10 +1,10 @@
-branch() {
+create() {
     # -----------------------------
     # 0. Check for help flag
     # -----------------------------
     if [[ "$1" == "-h" || "$1" == "--help" ]]; then
         cat << 'EOF'
-Usage: branch [JIRA_LINK] [TITLE...]
+Usage: create [JIRA_LINK] [TITLE...]
 
 Create a new git branch with the pattern: feature/<ISSUE>-<title>
 
@@ -16,7 +16,7 @@ Configuration:
   - Default: "feature/"
 
 Interactive mode (no arguments):
-  $ branch
+  $ create
   Enter Jira link (e.g., https://jira.company.com/browse/PROJ-123):
   > https://jira.company.com/browse/PROJ-123
   Parsed issue number: PROJ-123
@@ -28,22 +28,22 @@ Interactive mode (no arguments):
   Create this branch? (y/N): y
 
 One-liner mode (with arguments):
-  $ branch https://jira.company.com/browse/PROJ-123 fix login bug
+  $ create https://jira.company.com/browse/PROJ-123 fix login bug
   Parsed issue number: PROJ-123
   
   Branch name: feature/PROJ-123-fix-login-bug
   Create this branch? (y/N): y
 
-  $ branch PROJ-456 add user settings
+  $ create PROJ-456 add user settings
   Parsed issue number: PROJ-456
   
   Branch name: feature/PROJ-456-add-user-settings
   Create this branch? (y/N): y
 
 Examples:
-  branch https://jira.company.com/browse/PROJ-123 make some fixes
-  branch PROJ-456 implement new feature
-  branch https://company.atlassian.net/browse/ABC-789 refactor code
+  create https://jira.company.com/browse/PROJ-123 make some fixes
+  create PROJ-456 implement new feature
+  create https://company.atlassian.net/browse/ABC-789 refactor code
 
 EOF
         return 0
