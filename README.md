@@ -7,6 +7,7 @@ A collection of powerful zsh utilities to streamline your git/GitHub workflow. T
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Commands](#commands)
+  - [branch](#branch)
   - [create](#create)
   - [switch](#switch)
   - [commit](#commit)
@@ -72,6 +73,53 @@ export ZSH_FUNCTIONS_GIT_MERGE_COMMAND="gitkraken"
 ```
 
 ## Commands
+
+### branch
+
+Interactive menu to manage git branches with quick access to all branch operations.
+
+**Usage:**
+
+```bash
+branch
+```
+
+**Options:**
+
+- `-h, --help` - Show help message
+
+**Features:**
+
+- Interactive action selection menu
+- Quick access to create, switch, and update operations
+- Powered by fzf for intuitive selection
+- Auto-installs fzf if missing (with permission)
+
+**Examples:**
+
+```bash
+$ branch
+Branch action >
+> 🌿 Create - Create a new feature branch
+  🔀 Switch - Switch to another branch
+  ⬆️  Update - Update current branch with main/master
+  ✖ Abort
+
+# Navigate with ↑/↓ or j/k, press Enter to select
+```
+
+**Actions:**
+
+- **🌿 Create** - Create a new feature branch with Jira parsing
+- **🔀 Switch** - Switch to another branch using fzf
+- **⬆️ Update** - Update current branch with latest main/master
+
+**Requirements:**
+
+- `fzf` (fuzzy finder) - will prompt to install if not found
+- Homebrew (for automatic fzf installation)
+
+---
 
 ### create
 
@@ -726,6 +774,7 @@ Dropping stash@{0} ...
 Add these to your `~/.zshrc` for even faster workflows:
 
 ```bash
+alias b='branch'
 alias cr='create'
 alias sw='switch'
 alias st='status'
@@ -738,7 +787,11 @@ alias up='update -p'
 ### Workflow Example
 
 ```bash
-# Create a new feature branch (automatically updates main/master first)
+# Use the interactive branch menu
+$ branch
+# Select "Create" from menu
+
+# Or use create directly
 $ create PROJ-123 add user authentication
 Updating 'main' from origin...
 ✓ 'main' is up to date.
@@ -759,7 +812,11 @@ $ commit -p add validation
 # Keep branch up to date with main
 $ update
 
-# Switch between branches easily
+# Use the branch menu to switch
+$ branch
+# Select "Switch" from menu
+
+# Or use switch directly
 $ switch
 # Use arrow keys to select, preview shows commit history
 
