@@ -79,6 +79,8 @@ EOF
     {
       # List local branches
       git branch --format='%(refname:short)' | sed 's/^/local: /'
+      # Spacer
+      echo "─────────────────────────────"
       # List remote branches, excluding HEAD and origin/origin
       git branch -r --format='%(refname:short)' | grep -v 'HEAD' | grep -v '^origin$' | sed 's/^/remote: /'
     } | fzf \
@@ -86,7 +88,7 @@ EOF
       --reverse \
       --border \
       --prompt="Select branch: " \
-      --preview="branch=\$(echo {} | sed 's/^[^:]*: //'); git log --color=always -n 1 --format='%C(bold cyan)Author:%C(reset) %an%n%C(bold cyan)Date:%C(reset) %ar (%ad)%n%C(bold cyan)Message:%C(reset) %s%n' --date=format:'%Y-%m-%d %H:%M' \"\$branch\" 2>/dev/null && echo && git log --oneline --color=always -n 10 \"\$branch\" 2>/dev/null" \
+      --preview="branch=\$(echo {} | sed 's/^[^:]*: //'); if [[ \"\$branch\" == *───* ]]; then echo 'Spacer - not selectable'; else git log --color=always -n 1 --format='%C(bold cyan)Author:%C(reset) %an%n%C(bold cyan)Date:%C(reset) %ar (%ad)%n%C(bold cyan)Message:%C(reset) %s%n' --date=format:'%Y-%m-%d %H:%M' \"\$branch\" 2>/dev/null && echo && git log --oneline --color=always -n 10 \"\$branch\" 2>/dev/null; fi" \
       --preview-window=right:50% \
       --header="Current: $current_branch"
   )
@@ -96,6 +98,12 @@ EOF
   # -----------------------------
   if [[ -z "$selected_branch" ]]; then
     echo "No branch selected."
+    return 0
+  fi
+
+  # Ignore spacer selection
+  if [[ "$selected_branch" == *───* ]]; then
+    echo "Invalid selection."
     return 0
   fi
 
