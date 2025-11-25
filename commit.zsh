@@ -73,7 +73,7 @@ EOF
   # If no commit message was provided...
   if [ -z "$msg" ]; then
     # Prompt the user for a commit message (no newline, no extra spaces)
-    read -rp "Commit message: " msg
+    read "msg?Commit message: "
   fi
 
   # Check if there are staged changes

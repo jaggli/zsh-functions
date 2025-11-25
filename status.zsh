@@ -216,6 +216,34 @@ EOF
     # Check if everything is staged (no unstaged or untracked files)
     if ! echo "$status_output" | grep -q '\[UNSTAGED\]\|\[UNTRACKED\]'; then
       echo "✓ All changes are staged."
+      echo
+      echo "Staged files:"
+      
+      # Get list of staged files and display in tree-like structure
+      git diff --cached --name-only | while IFS= read -r file; do
+        # Get the directory and filename
+        dir=$(dirname "$file")
+        base=$(basename "$file")
+        
+        # Simple tree-like output with indentation
+        if [[ "$dir" == "." ]]; then
+          echo "  └─ $base"
+        else
+          echo "  └─ $file"
+        fi
+      done
+      
+      echo
+      read "ans?Would you like to commit and push these changes? (Y/n): "
+      case "$ans" in
+        [nN][oO]|[nN])
+          echo "Skipped commit and push."
+          ;;
+        *)
+          # Use the commit function with push flag
+          commit -p
+          ;;
+      esac
       break
     fi
   done

@@ -99,8 +99,17 @@ EOF
   fi
 
   if [[ "$current_branch" == "$base_branch" ]]; then
-    echo "You're already on '$base_branch'. Checkout a feature branch first."
-    return 1
+    # Already on main/master - just pull the latest changes
+    echo "Pulling latest changes for '$base_branch' from origin..."
+    git pull origin "$base_branch"
+    
+    if [[ $? -eq 0 ]]; then
+      echo "✓ '$base_branch' is now up-to-date."
+    else
+      echo "⚠ Failed to pull latest changes."
+      return 1
+    fi
+    return 0
   fi
 
   echo "Fetching latest '$base_branch' from origin..."
