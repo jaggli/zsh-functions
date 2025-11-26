@@ -19,6 +19,50 @@ A collection of powerful zsh utilities to streamline your git/GitHub workflow. T
   - [cleanstash](#cleanstash)
 - [Requirements](#requirements)
 
+### Workflow Example
+
+A possible workflow with some of the commands
+
+```bash
+# Use the interactive branch menu
+$ branch
+# Select "Create" from menu
+
+# Or use create directly
+$ create PROJ-123 add user authentication
+Updating 'main' from origin...
+✓ 'main' is up to date.
+✓ Successfully created and switched to branch: feature/PROJ-123-add-user-authentication (from main)
+
+# Make your changes...
+
+# Review and selectively stage changes
+$ status
+# Press Enter to toggle staging, ESC to exit
+
+# Commit staged changes
+$ commit implement login form
+
+# Or commit and push everything
+$ commit -p add validation
+
+# Keep branch up to date with main
+$ update
+
+# Use the branch menu to switch
+$ branch
+# Select "Switch" from menu
+
+# Or use switch directly
+$ switch
+# Use arrow keys to select, preview shows commit history
+
+# Open PR when ready
+$ pr
+```
+
+---
+
 ## Installation
 
 Make sure [`fzf`](https://github.com/junegunn/fzf) is installed on your system
@@ -138,12 +182,13 @@ create [JIRA_LINK] [TITLE...]
 **Features:**
 
 - Updates main/master from origin before creating branch
-- Parses Jira issue numbers from URLs automatically
+- Creates branch from latest main/master commit
+- Automatically pushes branch to origin and sets up tracking
+- Parses Jira issue numbers from URLs or direct input (e.g., `PROJ-123`)
 - Falls back to `NOISSUE` if no issue number is found
 - Converts titles to lowercase with dashes
 - Supports both interactive and one-liner modes
 - Automatically switches to the new branch
-- Creates branch from latest main/master commit
 
 **Examples:**
 
@@ -175,6 +220,11 @@ Updating 'main' from origin...
 $ create PROJ-456 implement new feature
 Parsed issue number: PROJ-456
 Branch name: feature/PROJ-456-implement-new-feature
+Updating 'main' from origin...
+✓ 'main' is up to date.
+✓ Successfully created and switched to branch: feature/PROJ-456-implement-new-feature (from main)
+Pushing branch to origin and setting up tracking...
+✓ Successfully pushed 'feature/PROJ-456-implement-new-feature' to origin with tracking.
 
 # Without Jira issue (uses NOISSUE)
 $ create stay logged in in github
@@ -207,7 +257,7 @@ switch
 
 **Features:**
 
-- Lists both local and remote branches
+- Lists local branches first, then remote branches (separated by a visual spacer)
 - Interactive selection with fzf
 - Live preview showing latest commit info and history
 - Automatically switches to selected branch
@@ -223,6 +273,7 @@ Select branch:
 Current: main
 > local: main
   local: feature/PROJ-123-new-feature
+  ─────────────────────────────
   remote: origin/develop
   remote: origin/feature/PROJ-456-another-feature
 
@@ -781,48 +832,6 @@ alias cp='commit -p'
 alias u='update'
 alias up='update -p'
 ```
-
-### Workflow Example
-
-```bash
-# Use the interactive branch menu
-$ branch
-# Select "Create" from menu
-
-# Or use create directly
-$ create PROJ-123 add user authentication
-Updating 'main' from origin...
-✓ 'main' is up to date.
-✓ Successfully created and switched to branch: feature/PROJ-123-add-user-authentication (from main)
-
-# Make your changes...
-
-# Review and selectively stage changes
-$ status
-# Press Enter to toggle staging, ESC to exit
-
-# Commit staged changes
-$ commit implement login form
-
-# Or commit and push everything
-$ commit -p add validation
-
-# Keep branch up to date with main
-$ update
-
-# Use the branch menu to switch
-$ branch
-# Select "Switch" from menu
-
-# Or use switch directly
-$ switch
-# Use arrow keys to select, preview shows commit history
-
-# Open PR when ready
-$ pr
-```
-
----
 
 ## License
 
