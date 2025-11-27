@@ -137,6 +137,7 @@ branch
 - Interactive action selection menu
 - Quick access to create, switch, and update operations
 - Powered by fzf for intuitive selection
+- Case-insensitive filtering
 - Auto-installs fzf if missing (with permission)
 
 **Examples:**
@@ -248,8 +249,12 @@ Select and switch to a git branch using fzf with interactive preview.
 **Usage:**
 
 ```bash
-switch
+switch [FILTER]
 ```
+
+**Arguments:**
+
+- `FILTER` - Optional search filter to pre-fill fzf (case-insensitive)
 
 **Options:**
 
@@ -259,6 +264,8 @@ switch
 
 - Lists local branches first, then remote branches (separated by a visual spacer)
 - Interactive selection with fzf
+- Case-insensitive filtering (both `CAPTCHA` and `captcha` match the same branches)
+- Optional filter argument to pre-fill search
 - Live preview showing latest commit info and history
 - Automatically switches to selected branch
 - For remote branches, creates local tracking branch if needed
@@ -288,6 +295,14 @@ e4f5g6h Update documentation
 
 # Select with Enter, automatically switches to branch
 ✓ Successfully switched to branch: feature/PROJ-123-new-feature
+
+# With filter argument (pre-fills search, case-insensitive)
+$ switch captcha
+# Opens fzf with 'captcha' already in search box
+# Matches: feature/LOVE-123-captcha-validation, feature/CAPTCHA-fix, etc.
+
+$ switch LOVE-456
+# Opens fzf filtering for branches containing 'LOVE-456'
 ```
 
 **Preview Information:**
@@ -408,6 +423,7 @@ status
 
 - Lists all modified, staged, and untracked files
 - Interactive file navigation with fzf
+- Case-insensitive filtering
 - Live diff preview with syntax highlighting (uses delta if available)
 - Toggle staging by pressing Enter on any file
 - Continuous loop for staging multiple files
@@ -637,6 +653,7 @@ stash
 - Interactive action selection menu
 - Choose between unstashing or cleaning up stashes
 - Powered by fzf for intuitive selection
+- Case-insensitive filtering
 - Auto-installs fzf if missing (with permission)
 
 **Examples:**
@@ -680,6 +697,7 @@ unstash
 **Features:**
 
 - Single-select stash picker with fzf
+- Case-insensitive filtering
 - Live preview of stash contents
 - Apply stash to working directory
 - Optional confirmation to drop stash after applying
@@ -743,6 +761,7 @@ cleanstash
 **Features:**
 
 - Multi-select support (use TAB to select multiple stashes)
+- Case-insensitive filtering
 - Live preview of stash contents
 - Confirmation prompt before deletion
 - Safe deletion (deletes in reverse order to maintain indices)

@@ -109,6 +109,7 @@ EOF
     local selection
     selection=$(printf "%s\n" "$choices" \
         | fzf --prompt="Available stashes > " \
+              -i \
               --reverse \
               --border \
               --header="Select a stash to apply" \

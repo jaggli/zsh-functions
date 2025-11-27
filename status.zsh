@@ -127,6 +127,7 @@ EOF
     selected_output=$(
       echo "$status_output" | fzf \
         --height=100% \
+        -i \
         --reverse \
         --border \
         --prompt="Git Status > " \

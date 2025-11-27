@@ -145,6 +145,7 @@ EOF
     local selection
     selection=$(printf "%s\n" "$choices" \
         | fzf --prompt="Branch action > " \
+              -i \
               --reverse \
               --border \
               --header="What would you like to do?" \

@@ -5,9 +5,12 @@ switch() {
   # -----------------------------
   if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     cat << 'EOF'
-Usage: branch-select
+Usage: switch [FILTER]
 
 Select a git branch using fzf and switch to it.
+
+Arguments:
+  FILTER        Optional search filter to pre-fill fzf
 
 Options:
   -h, --help    Show this help message
@@ -20,8 +23,14 @@ Behavior:
   - Current branch is highlighted with an asterisk (*)
 
 Examples:
-  $ select
+  $ switch
   # Opens fzf with list of branches, select one to switch
+
+  $ switch captcha
+  # Opens fzf with 'captcha' pre-filled as filter
+
+  $ switch LOVE-123
+  # Opens fzf filtering for branches containing 'LOVE-123'
 
 Requirements:
   - Must be in a git repository
@@ -66,10 +75,12 @@ EOF
   fi
 
   # -----------------------------
-  # 2. Get current branch
+  # 2. Get current branch and filter
   # -----------------------------
   local current_branch
   current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+  
+  local filter="$1"
 
   # -----------------------------
   # 3. List branches and select with fzf
@@ -88,6 +99,8 @@ EOF
       --reverse \
       --border \
       --prompt="Select branch: " \
+      --query="$filter" \
+      -i \
       --preview="branch=\$(echo {} | sed 's/^[^:]*: //'); if [[ \"\$branch\" == *───* ]]; then echo 'Spacer - not selectable'; else git log --color=always -n 1 --format='%C(bold cyan)Author:%C(reset) %an%n%C(bold cyan)Date:%C(reset) %ar (%ad)%n%C(bold cyan)Message:%C(reset) %s%n' --date=format:'%Y-%m-%d %H:%M' \"\$branch\" 2>/dev/null && echo && git log --oneline --color=always -n 10 \"\$branch\" 2>/dev/null; fi" \
       --preview-window=right:50% \
       --header="Current: $current_branch"
