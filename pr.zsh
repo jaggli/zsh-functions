@@ -85,6 +85,33 @@ EOF
 
   # Push if requested
   if [[ "$should_push" == true ]]; then
+    # Check if remote has updates and pull first
+    git fetch origin "$branch" 2>/dev/null
+    local local_commit=$(git rev-parse HEAD)
+    local remote_commit=$(git rev-parse "origin/$branch" 2>/dev/null)
+    
+    if [[ -n "$remote_commit" && "$local_commit" != "$remote_commit" ]]; then
+      # Check if we're behind the remote
+      if git merge-base --is-ancestor "$local_commit" "$remote_commit" 2>/dev/null; then
+        echo "Remote has updates. Pulling first..."
+        git pull --rebase origin "$branch"
+        if [[ $? -ne 0 ]]; then
+          echo "⚠ Failed to pull remote changes. Please resolve conflicts and try again."
+          return 1
+        fi
+        echo "✓ Pulled latest changes."
+      elif ! git merge-base --is-ancestor "$remote_commit" "$local_commit" 2>/dev/null; then
+        # Branches have diverged
+        echo "Remote has diverged. Pulling with rebase..."
+        git pull --rebase origin "$branch"
+        if [[ $? -ne 0 ]]; then
+          echo "⚠ Failed to pull remote changes. Please resolve conflicts and try again."
+          return 1
+        fi
+        echo "✓ Rebased on latest changes."
+      fi
+    fi
+    
     echo "Pushing '$branch' to origin..."
     git push origin "$branch"
     if [[ $? -eq 0 ]]; then
