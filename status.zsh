@@ -31,7 +31,7 @@ Navigation:
   ↑/↓ or j/k    Navigate through files
   TAB           Select/deselect file (multi-select)
   Enter         Toggle staging for selected file(s)
-  r             Revert changes (discard modifications)
+  Ctrl-R        Revert changes (discard modifications)
   ESC/Ctrl-C    Exit
 
 Examples:
@@ -130,10 +130,10 @@ EOF
         --reverse \
         --border \
         --prompt="Git Status > " \
-        --header="[Enter] toggle stage | [r] revert | [TAB] multi-select | [ESC] exit" \
+        --header="[Enter] toggle stage | [Ctrl-r] revert | [TAB] multi-select | [ESC] exit" \
         --multi \
         --ansi \
-        --expect=r \
+        --expect=ctrl-r \
         --preview='
           file=$(echo {} | awk "{print \$NF}");
           file_status=$(echo {} | awk "{print \$2}");
@@ -184,7 +184,7 @@ EOF
     # -----------------------------
     # 4. Handle action based on key pressed
     # -----------------------------
-    if [[ "$key_pressed" == "r" ]]; then
+    if [[ "$key_pressed" == "ctrl-r" ]]; then
       # Revert changes for all selected files
       local files_to_revert=()
       local untracked_to_delete=()
