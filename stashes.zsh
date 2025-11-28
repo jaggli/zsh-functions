@@ -1,10 +1,10 @@
-stash() {
+stashes() {
     # -----------------------------
     # 0. Check for help flag
     # -----------------------------
     if [[ "$1" == "-h" || "$1" == "--help" ]]; then
         cat << 'EOF'
-Usage: stash [OPTIONS]
+Usage: stashes [OPTIONS]
 
 Interactive menu to manage git stashes.
 Choose between unstashing (applying) or cleaning up (deleting) stashes.
@@ -23,7 +23,7 @@ Navigation:
   ESC/Ctrl-C    Abort
 
 Examples:
-  $ stash
+  $ stashes
   Stash action >
   > 📦 Unstash - Apply and optionally drop a stash
     🗑️  Clean up - Delete stashes without applying
@@ -40,7 +40,7 @@ Examples:
 
   ---
 
-  $ stash
+  $ stashes
   Stash action >
   > 📦 Unstash - Apply and optionally drop a stash
     🗑️  Clean up - Delete stashes without applying

@@ -15,6 +15,7 @@ A collection of powerful zsh utilities to streamline your git/GitHub workflow. T
   - [pr](#pr)
   - [update](#update)
   - [stash](#stash)
+  - [stashes](#stashes)
   - [unstash](#unstash)
   - [cleanstash](#cleanstash)
 - [Requirements](#requirements)
@@ -636,12 +637,58 @@ Set `ZSH_FUNCTIONS_GIT_MERGE_COMMAND` to your preferred merge tool:
 
 ### stash
 
+Create a git stash with a descriptive name.
+
+**Usage:**
+
+```bash
+stash [NAME...]
+```
+
+**Options:**
+
+- `-h, --help` - Show help message
+
+**Features:**
+
+- Stashes all changed files (staged and unstaged)
+- Custom stash message for easy identification
+- Interactive mode if no name provided
+- Includes untracked files
+
+**Examples:**
+
+```bash
+# Interactive mode (prompts for name)
+$ stash
+Stash name: work in progress on login
+✓ Created stash: work in progress on login
+
+# Direct mode (name as arguments)
+$ stash fix for authentication bug
+✓ Created stash: fix for authentication bug
+
+# View your stashes
+$ git stash list
+stash@{0}: On main: fix for authentication bug
+stash@{1}: On main: work in progress on login
+```
+
+**Requirements:**
+
+- Must be in a git repository
+- Must have changes to stash
+
+---
+
+### stashes
+
 Interactive menu to manage git stashes with fuzzy finding.
 
 **Usage:**
 
 ```bash
-stash
+stashes
 ```
 
 **Options:**
@@ -659,7 +706,7 @@ stash
 **Examples:**
 
 ```bash
-$ stash
+$ stashes
 Stash action >
 > 📦 Unstash - Apply and optionally drop a stash
   🗑️  Clean up - Delete stashes without applying
@@ -819,7 +866,7 @@ Dropping stash@{0} ...
 
 ### Optional
 
-- **fzf** - Fuzzy finder for interactive menus (required for `switch`, `status`, `stash`, `unstash`, `cleanstash`)
+- **fzf** - Fuzzy finder for interactive menus (required for `switch`, `status`, `stashes`, `unstash`, `cleanstash`)
   - Install with: `brew install fzf`
   - Auto-install prompt included in commands that require it
 - **delta** - Enhanced diff syntax highlighting (recommended for `status`)
