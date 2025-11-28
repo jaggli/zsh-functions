@@ -698,7 +698,7 @@ stashes
 **Features:**
 
 - Interactive action selection menu
-- Choose between unstashing or cleaning up stashes
+- Choose between creating, applying, or cleaning up stashes
 - Powered by fzf for intuitive selection
 - Case-insensitive filtering
 - Auto-installs fzf if missing (with permission)
@@ -708,7 +708,8 @@ stashes
 ```bash
 $ stashes
 Stash action >
-> 📦 Unstash - Apply and optionally drop a stash
+> 💾 Stash - Create a new stash with a name
+  📦 Unstash - Apply and optionally drop a stash
   🗑️  Clean up - Delete stashes without applying
   ✖ Abort
 
@@ -717,6 +718,7 @@ Stash action >
 
 **Actions:**
 
+- **💾 Stash** - Create a new stash with all changes
 - **📦 Unstash** - Apply a stash to your working directory, optionally drop it
 - **🗑️ Clean up** - Delete stashes without applying (supports multi-select)
 
