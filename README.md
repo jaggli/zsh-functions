@@ -250,12 +250,12 @@ Select and switch to a git branch using fzf with interactive preview.
 **Usage:**
 
 ```bash
-switch [FILTER]
+switch [FILTER...]
 ```
 
 **Arguments:**
 
-- `FILTER` - Optional search filter to pre-fill fzf (case-insensitive)
+- `FILTER...` - Optional search filter words to pre-fill fzf (case-insensitive)
 
 **Options:**
 
@@ -266,7 +266,7 @@ switch [FILTER]
 - Lists local branches first, then remote branches (separated by a visual spacer)
 - Interactive selection with fzf
 - Case-insensitive filtering (both `CAPTCHA` and `captcha` match the same branches)
-- Optional filter argument to pre-fill search
+- Optional filter argument(s) to pre-fill search (supports multiple words)
 - Live preview showing latest commit info and history
 - Automatically switches to selected branch
 - For remote branches, creates local tracking branch if needed
@@ -304,6 +304,10 @@ $ switch captcha
 
 $ switch LOVE-456
 # Opens fzf filtering for branches containing 'LOVE-456'
+
+# With multiple filter words
+$ switch update figma guidelines
+# Opens fzf with 'update figma guidelines' pre-filled as filter
 ```
 
 **Preview Information:**

@@ -5,12 +5,12 @@ switch() {
   # -----------------------------
   if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     cat << 'EOF'
-Usage: switch [FILTER]
+Usage: switch [FILTER...]
 
 Select a git branch using fzf and switch to it.
 
 Arguments:
-  FILTER        Optional search filter to pre-fill fzf
+  FILTER...     Optional search filter words to pre-fill fzf (joined with spaces)
 
 Options:
   -h, --help    Show this help message
@@ -31,6 +31,9 @@ Examples:
 
   $ switch LOVE-123
   # Opens fzf filtering for branches containing 'LOVE-123'
+
+  $ switch update figma guidelines
+  # Opens fzf with 'update figma guidelines' pre-filled as filter
 
 Requirements:
   - Must be in a git repository
@@ -80,7 +83,7 @@ EOF
   local current_branch
   current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
   
-  local filter="$1"
+  local filter="$*"
 
   # -----------------------------
   # 3. List branches and select with fzf
