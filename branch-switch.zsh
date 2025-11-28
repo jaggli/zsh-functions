@@ -17,6 +17,7 @@ Options:
 
 Behavior:
   - Lists both local and remote branches
+  - Remote branches are hidden if a local branch with the same name exists
   - Uses fzf for interactive selection
   - Automatically switches to the selected branch
   - For remote branches, creates a local tracking branch if needed
@@ -88,15 +89,31 @@ EOF
   # -----------------------------
   # 3. List branches and select with fzf
   # -----------------------------
+  # Get local branches
+  local local_branches
+  local_branches=$(git branch --format='%(refname:short)')
+  
+  # Get remote branches, filter out those that already exist locally
+  local remote_branches
+  remote_branches=$(git branch -r --format='%(refname:short)' | grep -v 'HEAD' | grep -v '^origin$' | while read -r remote; do
+    local_name="${remote#*/}"  # Remove origin/ prefix
+    # Only include if no local branch with this name exists
+    if ! echo "$local_branches" | grep -qx "$local_name"; then
+      echo "$remote"
+    fi
+  done)
+  
   local selected_branch
   selected_branch=$(
     {
       # List local branches
-      git branch --format='%(refname:short)' | sed 's/^/local: /'
-      # Spacer
-      echo "─────────────────────────────"
-      # List remote branches, excluding HEAD and origin/origin
-      git branch -r --format='%(refname:short)' | grep -v 'HEAD' | grep -v '^origin$' | sed 's/^/remote: /'
+      echo "$local_branches" | sed 's/^/local: /'
+      # Spacer (only if there are remote branches to show)
+      if [[ -n "$remote_branches" ]]; then
+        echo "─────────────────────────────"
+        # List filtered remote branches
+        echo "$remote_branches" | sed 's/^/remote: /'
+      fi
     } | fzf \
       --height=40% \
       --reverse \

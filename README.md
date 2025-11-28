@@ -264,6 +264,7 @@ switch [FILTER...]
 **Features:**
 
 - Lists local branches first, then remote branches (separated by a visual spacer)
+- Remote branches are hidden if a local branch with the same name exists (avoids duplicates)
 - Interactive selection with fzf
 - Case-insensitive filtering (both `CAPTCHA` and `captcha` match the same branches)
 - Optional filter argument(s) to pre-fill search (supports multiple words)
