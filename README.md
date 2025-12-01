@@ -14,6 +14,7 @@ A collection of powerful zsh utilities to streamline your git/GitHub workflow. T
   - [status](#status)
   - [pr](#pr)
   - [update](#update)
+  - [stale](#stale)
   - [stash](#stash)
   - [stashes](#stashes)
   - [unstash](#unstash)
@@ -640,6 +641,90 @@ Set `ZSH_FUNCTIONS_GIT_MERGE_COMMAND` to your preferred merge tool:
 
 ---
 
+### stale
+
+Show a list of remote branches ordered by last modification date (oldest first). Useful for identifying stale branches that may need cleanup.
+
+**Usage:**
+
+```bash
+stale [OPTIONS] [FILTER...]
+```
+
+**Arguments:**
+
+- `FILTER...` - Optional search filter words to pre-fill fzf (joined with spaces)
+
+**Options:**
+
+- `-h, --help` - Show help message
+- `-m, --my` - Pre-fill filter with your git username (from `git config user.name`)
+
+**Features:**
+
+- By default, only shows branches older than 3 months (truly stale)
+- Press Ctrl-A to toggle showing all branches including recent ones
+- Lists branches sorted by last commit date (oldest first)
+- Shows branch name, relative date, and author
+- Interactive selection with fzf
+- Preview shows recent commits on the selected branch
+- Multi-select support to delete multiple branches at once
+- Fetches latest from remote before listing
+
+**Examples:**
+
+```bash
+$ stale
+Fetching latest from remote...
+Stale branches (>3 months, oldest first) >
+> feature/old-feature                    4 months ago         John Doe
+  feature/another-old-one                5 months ago         Jane Smith
+  feature/very-old                       6 months ago         Bob Wilson
+  ✖ Abort
+
+# Press Ctrl-A to show all branches (including recent ones)
+# Use TAB to select multiple branches, press Enter to delete
+
+Selected branches to delete from remote:
+  - origin/feature/old-feature
+  - origin/feature/another-old-one
+
+Delete these 2 branch(es) from remote? (y/N): y
+Deleting branches...
+✓ Deleted origin/feature/old-feature
+✓ Deleted origin/feature/another-old-one
+
+# Filter by your own branches
+$ stale --my
+# Pre-fills fzf with your git username to show only your branches
+
+# Filter by any text
+$ stale Product Refactoring
+# Pre-fills fzf with "Product Refactoring"
+```
+
+**Navigation:**
+
+- `↑/↓` or `j/k` - Navigate through branches
+- `TAB` - Select/deselect branch (multi-select)
+- `Ctrl-A` - Toggle showing all branches (including recent ones)
+- `Enter` - Delete selected branches
+- `ESC/Ctrl-C` - Exit without action
+
+**Output format:**
+
+```
+<branch-name>                            <relative-date>  <author>
+```
+
+**Requirements:**
+
+- Must be in a git repository
+- `fzf` (fuzzy finder)
+- Push access to the remote repository (for deletion)
+
+---
+
 ### stash
 
 Create a git stash with a descriptive name.
@@ -873,7 +958,7 @@ Dropping stash@{0} ...
 
 ### Optional
 
-- **fzf** - Fuzzy finder for interactive menus (required for `switch`, `status`, `stashes`, `unstash`, `cleanstash`)
+- **fzf** - Fuzzy finder for interactive menus (required for `switch`, `status`, `stale`, `stashes`, `unstash`, `cleanstash`)
   - Install with: `brew install fzf`
   - Auto-install prompt included in commands that require it
 - **delta** - Enhanced diff syntax highlighting (recommended for `status`)
