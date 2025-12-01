@@ -284,9 +284,8 @@ EOF
       break
     fi
 
-    # Check if everything is staged (no unstaged or untracked files)
-    if ! echo "$status_output" | grep -q '\[UNSTAGED\]\|\[UNTRACKED\]'; then
-      echo "✓ All changes are staged."
+    # Check if there are any staged files and ask for commit
+    if echo "$status_output" | grep -q '\[STAGED\]'; then
       echo
       echo "Staged files:"
       
@@ -305,17 +304,17 @@ EOF
       done
       
       echo
-      read "ans?Would you like to commit and push these changes? (Y/n): "
+      read "ans?Would you like to commit and push these changes? (y/N): "
       case "$ans" in
-        [nN][oO]|[nN])
-          echo "Skipped commit and push."
+        [yY][eE][sS]|[yY])
+          # Use the commit function with staged and push flags
+          commit -s -p
+          break
           ;;
         *)
-          # Use the commit function with push flag
-          commit -p
+          echo "Continuing..."
           ;;
       esac
-      break
     fi
   done
 }

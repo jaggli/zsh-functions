@@ -2,6 +2,7 @@
 # If no commit message argument is given, prompt the user for one.
 commit() {
   local should_push=false
+  local staged_only=false
   local msg_parts=()
 
   # Parse arguments
@@ -15,6 +16,7 @@ Stage all changes (git add -A) and commit with a message.
 
 Options:
   -p, --push    Push to origin after successful commit
+  -s, --staged  Commit only staged changes (skip prompt, ignore unstaged)
   -h, --help    Show this help message
 
 Interactive mode (no message):
@@ -46,6 +48,7 @@ Examples:
   commit add user validation                # Quick commit
   commit refactor auth module --push        # Commit and push
   commit -p update dependencies             # Commit and push (short flag)
+  commit -s -p fix bug                      # Commit only staged and push
 
 EOF
         return 0
@@ -54,9 +57,13 @@ EOF
         should_push=true
         shift
         ;;
+      -s|--staged)
+        staged_only=true
+        shift
+        ;;
       -*)
         echo "Unknown option: $1"
-        echo "Usage: commit [message] [-p|--push]"
+        echo "Usage: commit [message] [-p|--push] [-s|--staged]"
         return 1
         ;;
       *)
@@ -83,8 +90,16 @@ EOF
   local has_unstaged
   has_unstaged=$(git diff --name-only)
 
+  # If --staged flag is set, only commit staged changes
+  if [[ "$staged_only" == true ]]; then
+    if [[ -z "$has_staged" ]]; then
+      echo "No staged changes to commit."
+      return 1
+    fi
+    echo "Committing staged changes only..."
+    git commit -m "$msg"
   # If there are both staged and unstaged changes, ask what to commit
-  if [[ -n "$has_staged" && -n "$has_unstaged" ]]; then
+  elif [[ -n "$has_staged" && -n "$has_unstaged" ]]; then
     echo
     echo "You have both staged and unstaged changes."
     echo
