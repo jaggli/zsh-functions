@@ -166,16 +166,61 @@ EOF
     # Create temp files for fzf reload
     local stale_file=$(mktemp)
     local all_file=$(mktemp)
+    local state_file=$(mktemp)
     echo "$stale_branch_list" > "$stale_file"
     echo "$abort_label" >> "$stale_file"
     echo "$all_branch_list" > "$all_file"
     echo "$abort_label" >> "$all_file"
+    echo "stale" > "$state_file"
 
     # -----------------------------
     # 5. Run fzf picker with preview
     # -----------------------------
     local stale_count=$(echo "$stale_branch_list" | grep -c . || echo "0")
     local all_count=$(echo "$all_branch_list" | grep -c . || echo "0")
+    
+    # Create toggle script
+    local toggle_script=$(mktemp)
+    cat > "$toggle_script" << TOGGLE_EOF
+#!/bin/bash
+state=\$(cat "$state_file")
+if [[ "\$state" == "stale" ]]; then
+    echo "all" > "$state_file"
+    cat "$all_file"
+else
+    echo "stale" > "$state_file"
+    cat "$stale_file"
+fi
+TOGGLE_EOF
+    chmod +x "$toggle_script"
+    
+    # Create prompt script
+    local prompt_script=$(mktemp)
+    cat > "$prompt_script" << PROMPT_EOF
+#!/bin/bash
+state=\$(cat "$state_file")
+if [[ "\$state" == "stale" ]]; then
+    echo "Stale branches (>3 months, oldest first) > "
+else
+    echo "All branches (oldest first) > "
+fi
+PROMPT_EOF
+    chmod +x "$prompt_script"
+    
+    # Create header script  
+    local header_script=$(mktemp)
+    cat > "$header_script" << HEADER_EOF
+#!/bin/bash
+state=\$(cat "$state_file")
+if [[ "\$state" == "stale" ]]; then
+    echo "[TAB] select | [Ctrl-A] toggle all/stale | [Enter] delete | [ESC] exit
+Showing $stale_count stale branches (older than 3 months)"
+else
+    echo "[TAB] select | [Ctrl-A] toggle all/stale | [Enter] delete | [ESC] exit
+Showing all $all_count branches"
+fi
+HEADER_EOF
+    chmod +x "$header_script"
     
     local selection
     selection=$(
@@ -185,14 +230,13 @@ EOF
             -i \
             --reverse \
             --border \
-            --header="[TAB] select | [Ctrl-A] show all ($all_count) | [Enter] delete | [ESC] exit
+            --header="[TAB] select | [Ctrl-A] toggle all/stale | [Enter] delete | [ESC] exit
 Showing $stale_count stale branches (older than 3 months)" \
             --multi \
             --delimiter=$'\t' \
             --with-nth=1 \
             --bind=enter:accept \
-            --bind="ctrl-a:reload(cat $all_file)+change-prompt(All branches (oldest first) > )+change-header([TAB] select | [Ctrl-A] show all ($all_count) | [Enter] delete | [ESC] exit
-Showing all $all_count branches)" \
+            --bind="ctrl-a:reload($toggle_script)+transform-prompt($prompt_script)+transform-header($header_script)" \
             --preview='
                 line={}
                 if [[ "$line" == "✖ Abort" ]]; then
@@ -210,7 +254,7 @@ Showing all $all_count branches)" \
     )
     
     # Cleanup temp files
-    rm -f "$stale_file" "$all_file"
+    rm -f "$stale_file" "$all_file" "$state_file" "$toggle_script" "$prompt_script" "$header_script"
 
     # ESC or Ctrl-C
     if [[ -z "$selection" ]]; then
