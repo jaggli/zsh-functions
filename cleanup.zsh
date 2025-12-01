@@ -103,7 +103,7 @@ EOF
     local remote_branches
     remote_branches=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin | sed 's|^origin/||' | grep -v '^HEAD$')
 
-    # Arrays to hold branches by category
+    # Arrays to hold branches by category (format: timestamp|branch|relative_date)
     local merged_branches=()
     local stale_branches=()
     local recent_branches=()
@@ -132,15 +132,21 @@ EOF
 
         if [[ "$has_remote" == false && -n "$configured_upstream" ]]; then
             # Had upstream but remote is gone = merged and deleted remotely
-            merged_branches+=("$branch|$relative_date")
+            merged_branches+=("$last_commit_ts|$branch|$relative_date")
         elif [[ -n "$last_commit_ts" && "$last_commit_ts" -lt "$one_week_ago" ]]; then
             # Stale: no commits in 7+ days (pre-select for deletion)
-            stale_branches+=("$branch|$relative_date")
+            stale_branches+=("$last_commit_ts|$branch|$relative_date")
         else
             # Recent: has recent activity (don't pre-select)
-            recent_branches+=("$branch|$relative_date")
+            recent_branches+=("$last_commit_ts|$branch|$relative_date")
         fi
     done < <(git for-each-ref --format='%(refname:short)' refs/heads)
+
+    # Sort each category by timestamp (most recent first)
+    IFS=$'\n' merged_branches=($(printf '%s\n' "${merged_branches[@]}" | sort -t'|' -k1 -rn))
+    IFS=$'\n' stale_branches=($(printf '%s\n' "${stale_branches[@]}" | sort -t'|' -k1 -rn))
+    IFS=$'\n' recent_branches=($(printf '%s\n' "${recent_branches[@]}" | sort -t'|' -k1 -rn))
+    unset IFS
 
     # -----------------------------
     # 5. Build fzf input with pre-selection markers
@@ -152,8 +158,8 @@ EOF
 
     # Add merged branches (pre-selected)
     for entry in "${merged_branches[@]}"; do
-        local branch="${entry%%|*}"
-        local date="${entry#*|}"
+        local branch=$(echo "$entry" | cut -d'|' -f2)
+        local date=$(echo "$entry" | cut -d'|' -f3)
         local display_branch="$branch"
         if [[ ${#display_branch} -gt $max_branch_len ]]; then
             display_branch="${display_branch:0:$((max_branch_len - 3))}..."
@@ -166,8 +172,8 @@ EOF
 
     # Add stale branches (pre-selected)
     for entry in "${stale_branches[@]}"; do
-        local branch="${entry%%|*}"
-        local date="${entry#*|}"
+        local branch=$(echo "$entry" | cut -d'|' -f2)
+        local date=$(echo "$entry" | cut -d'|' -f3)
         local display_branch="$branch"
         if [[ ${#display_branch} -gt $max_branch_len ]]; then
             display_branch="${display_branch:0:$((max_branch_len - 3))}..."
@@ -180,8 +186,8 @@ EOF
 
     # Add recent branches (not pre-selected)
     for entry in "${recent_branches[@]}"; do
-        local branch="${entry%%|*}"
-        local date="${entry#*|}"
+        local branch=$(echo "$entry" | cut -d'|' -f2)
+        local date=$(echo "$entry" | cut -d'|' -f3)
         local display_branch="$branch"
         if [[ ${#display_branch} -gt $max_branch_len ]]; then
             display_branch="${display_branch:0:$((max_branch_len - 3))}..."
@@ -300,9 +306,12 @@ Found $total_count branches ($preselect_count pre-selected for deletion)" \
     fi
     echo ""
 
-    read "confirm?Delete these ${#branches_to_delete[@]} local branch(es)? (y/N): "
+    read "confirm?Delete these ${#branches_to_delete[@]} local branch(es)? (Y/n): "
     case "$confirm" in
-        [yY][eE][sS]|[yY])
+        [nN][oO]|[nN])
+            echo "Deletion cancelled."
+            ;;
+        *)
             # Switch to base branch if needed
             if [[ "$need_switch" == true ]]; then
                 echo "Switching to '$base_branch'..."
@@ -321,9 +330,6 @@ Found $total_count branches ($preselect_count pre-selected for deletion)" \
                     echo "✗ Failed to delete $branch"
                 fi
             done
-            ;;
-        *)
-            echo "Deletion cancelled."
             ;;
     esac
 }
