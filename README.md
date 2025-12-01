@@ -125,6 +125,20 @@ Apply stash with fzf picker. Optionally drop after applying.
 
 Delete stashes (multi-select with TAB).
 
+### cleanup
+
+```bash
+cleanup
+```
+
+Find and delete leftover local branches. Shows all local branches categorized:
+
+- **[MERGED]** - Remote was deleted (pre-selected)
+- **[STALE]** - No commits in 7+ days (pre-selected)
+- **[RECENT]** - Recent activity (not selected)
+
+Switches to main/master first if current branch is selected for deletion.
+
 ## License
 
 See [LICENSE](LICENSE) file for details.
