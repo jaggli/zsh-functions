@@ -34,9 +34,9 @@ Navigation:
 Examples:
   $ stale
   Stale branches (oldest first) >
-  > feature/old-feature                    3 months ago    John Doe
+  > feature/very-old                       6 months ago    Bob Wilson
     feature/another-old-one                4 months ago    Jane Smith
-    feature/very-old                       6 months ago    Bob Wilson
+    feature/old-feature                    3 months ago    John Doe
     ✖ Abort
 
   # Press Ctrl-A to show all branches including recent ones
