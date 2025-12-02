@@ -272,6 +272,7 @@ Found $total_count branches ($preselect_count pre-selected for deletion)" \
     # -----------------------------
     local branches_to_delete=()
     local need_switch=false
+    local only_merged=true
 
     while IFS= read -r line; do
         [[ "$line" == "✖ Abort"* ]] && continue
@@ -281,6 +282,10 @@ Found $total_count branches ($preselect_count pre-selected for deletion)" \
             branches_to_delete+=("$branch_name")
             if [[ "$branch_name" == "$current_branch" ]]; then
                 need_switch=true
+            fi
+            # Check if this is not a MERGED branch
+            if [[ ! "$line" == "[MERGED]"* ]]; then
+                only_merged=false
             fi
         fi
     done <<< "$selection"
@@ -306,30 +311,43 @@ Found $total_count branches ($preselect_count pre-selected for deletion)" \
     fi
     echo ""
 
-    read "confirm?Delete these ${#branches_to_delete[@]} local branch(es)? (Y/n): "
-    case "$confirm" in
-        [nN][oO]|[nN])
-            echo "Deletion cancelled."
-            ;;
-        *)
-            # Switch to base branch if needed
-            if [[ "$need_switch" == true ]]; then
-                echo "Switching to '$base_branch'..."
-                git checkout "$base_branch" || {
-                    echo "⚠ Failed to switch to '$base_branch'. Aborting deletion."
-                    return 1
-                }
-            fi
+    # Default to Y if only merged branches, otherwise N
+    if [[ "$only_merged" == true ]]; then
+        read "confirm?Delete these ${#branches_to_delete[@]} local branch(es)? (Y/n): "
+        case "$confirm" in
+            [nN][oO]|[nN])
+                echo "Deletion cancelled."
+                return 0
+                ;;
+        esac
+    else
+        read "confirm?Delete these ${#branches_to_delete[@]} local branch(es)? (y/N): "
+        case "$confirm" in
+            [yY][eE][sS]|[yY])
+                ;;
+            *)
+                echo "Deletion cancelled."
+                return 0
+                ;;
+        esac
+    fi
 
-            echo "Deleting branches..."
-            for branch in "${branches_to_delete[@]}"; do
-                echo "Deleting $branch ..."
-                if git branch -D "$branch" 2>/dev/null; then
-                    echo "✓ Deleted $branch"
-                else
-                    echo "✗ Failed to delete $branch"
-                fi
-            done
-            ;;
-    esac
+    # Switch to base branch if needed
+    if [[ "$need_switch" == true ]]; then
+        echo "Switching to '$base_branch'..."
+        git checkout "$base_branch" || {
+            echo "⚠ Failed to switch to '$base_branch'. Aborting deletion."
+            return 1
+        }
+    fi
+
+    echo "Deleting branches..."
+    for branch in "${branches_to_delete[@]}"; do
+        echo "Deleting $branch ..."
+        if git branch -D "$branch" 2>/dev/null; then
+            echo "✓ Deleted $branch"
+        else
+            echo "✗ Failed to delete $branch"
+        fi
+    done
 }
