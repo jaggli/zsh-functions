@@ -112,6 +112,24 @@ EOF
     return 0
   fi
 
+  # Check for uncommitted changes before merging
+  if [[ -n "$(git status --porcelain)" ]]; then
+    echo ""
+    echo "You have uncommitted changes:"
+    git status --short
+    echo ""
+    read -r "reply?Commit changes before updating? (Y/n): "
+    if [[ "$reply" =~ ^[Nn]$ ]]; then
+      echo "⚠ Cannot merge with uncommitted changes. Commit or stash them first."
+      return 1
+    fi
+    commit
+    if [[ $? -ne 0 ]]; then
+      echo "⚠ Commit failed. Aborting update."
+      return 1
+    fi
+  fi
+
   echo "Fetching latest '$base_branch' from origin..."
   git fetch origin "$base_branch:$base_branch" || {
     echo "⚠ Could not fast-forward local '$base_branch'."
@@ -126,22 +144,6 @@ EOF
     
     # Push if requested and merge was successful
     if [[ "$should_push" == true ]]; then
-      # Check for uncommitted changes
-      if [[ -n "$(git status --porcelain)" ]]; then
-        echo ""
-        echo "You have uncommitted changes:"
-        git status --short
-        echo ""
-        read -r "reply?Commit changes before pushing? (y/N): "
-        if [[ "$reply" =~ ^[Yy]$ ]]; then
-          commit -p
-          return $?
-        else
-          echo "⚠ Cannot push with uncommitted changes. Commit or stash them first."
-          return 1
-        fi
-      fi
-
       # Check if remote has updates and pull first
       git fetch origin "$current_branch" 2>/dev/null
       local local_commit=$(git rev-parse HEAD)
