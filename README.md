@@ -139,6 +139,19 @@ Find and delete leftover local branches. Shows all local branches categorized:
 
 Switches to main/master first if current branch is selected for deletion.
 
+### commits
+
+```bash
+commits [COUNT]
+```
+
+List recent commits with option to revert. Multi-select with TAB to revert multiple.
+
+```bash
+commits        # Show last 20 commits
+commits 50     # Show last 50 commits
+```
+
 ## License
 
 See [LICENSE](LICENSE) file for details.
