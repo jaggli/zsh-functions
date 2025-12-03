@@ -243,6 +243,7 @@ EOF
       fi
     else
       # Toggle staging for all selected files
+      local did_stage=false
       for selected_file in "${selected_files[@]}"; do
         local staging_status=$(echo "$selected_file" | awk '{print $1}')
         local filename=$(echo "$selected_file" | awk '{print $NF}')
@@ -253,9 +254,11 @@ EOF
         elif [[ "$staging_status" == "[UNSTAGED]" ]]; then
           echo "Staging: $filename"
           git add "$filename"
+          did_stage=true
         elif [[ "$staging_status" == "[UNTRACKED]" ]]; then
           echo "Adding: $filename"
           git add "$filename"
+          did_stage=true
         fi
       done
     fi
@@ -284,8 +287,8 @@ EOF
       break
     fi
 
-    # Check if there are any staged files and ask for commit
-    if echo "$status_output" | grep -q '\[STAGED\]'; then
+    # Only ask for commit if we just staged something (not unstaged)
+    if [[ "$did_stage" == true ]] && echo "$status_output" | grep -q '\[STAGED\]'; then
       echo
       echo "Staged files:"
       
@@ -304,15 +307,15 @@ EOF
       done
       
       echo
-      read "ans?Would you like to commit and push these changes? (y/N): "
+      read "ans?Would you like to commit and push these changes? (Y/n): "
       case "$ans" in
-        [yY][eE][sS]|[yY])
+        [nN][oO]|[nN])
+          echo "Continuing..."
+          ;;
+        *)
           # Use the commit function with staged and push flags
           commit -s -p
           break
-          ;;
-        *)
-          echo "Continuing..."
           ;;
       esac
     fi
