@@ -127,7 +127,26 @@ EOF
     echo
 
     # -----------------------------
-    # 5. Update main/master branch before creating new branch
+    # 5. Check if branch already exists
+    # -----------------------------
+    if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+        echo "⚠ Branch '$branch_name' already exists locally."
+        read "ans?Switch to this branch instead? (Y/n): "
+        case "$ans" in
+            [nN][oO]|[nN])
+                echo "Aborted."
+                return 1
+                ;;
+            *)
+                git checkout "$branch_name"
+                echo "✓ Switched to existing branch: $branch_name"
+                return 0
+                ;;
+        esac
+    fi
+
+    # -----------------------------
+    # 6. Update main/master branch before creating new branch
     # -----------------------------
     # Detect base branch: main or master
     local base_branch
@@ -150,7 +169,7 @@ EOF
     fi
 
     # -----------------------------
-    # 6. Create branch
+    # 7. Create branch
     # -----------------------------
     echo "Creating branch..."
     if [[ -n "$base_branch" ]]; then
@@ -172,7 +191,7 @@ EOF
     fi
 
     # -----------------------------
-    # 7. Push branch to origin and set up tracking
+    # 8. Push branch to origin and set up tracking
     # -----------------------------
     echo "Pushing branch to origin and setting up tracking..."
     if git push -u origin "$branch_name"; then
