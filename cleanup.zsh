@@ -1,13 +1,21 @@
 # Cleanup local branches that are no longer needed
 cleanup() {
     # -----------------------------
-    # 0. Check for help flag
+    # 0. Check for help flag and parse options
     # -----------------------------
-    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-        cat << 'EOF'
-Usage: cleanup
+    local json_mode=false
+    
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+                cat << 'EOF'
+Usage: cleanup [OPTIONS]
 
 Find and delete local branches that are no longer needed.
+
+Options:
+  -h, --help    Show this help message
+  --json        Output branch data as JSON (non-interactive)
 
 Categories (pre-selected for deletion):
   - Merged branches: Local branches whose remote was merged and deleted
@@ -35,45 +43,66 @@ Examples:
     [RECENT]  feature/work-in-progress   2 days ago
     ✖ Abort
 
+  $ cleanup --json
+  [{"last_change_timestamp":1733123456,"author_email":"dev@example.com",...}]
+
 Requirements:
   - Must be in a git repository
-  - fzf (fuzzy finder)
+  - fzf (fuzzy finder) - not required for --json mode
 
 EOF
-        return 0
-    fi
+                return 0
+                ;;
+            --json)
+                json_mode=true
+                shift
+                ;;
+            *)
+                echo "Unknown option: $1"
+                return 1
+                ;;
+        esac
+    done
 
     # -----------------------------
     # 1. Check prerequisites
     # -----------------------------
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "Not inside a git repository."
+        if [[ "$json_mode" == true ]]; then
+            echo "[]"
+        else
+            echo "Not inside a git repository." >&2
+        fi
         return 1
     fi
 
-    if ! command -v fzf >/dev/null 2>&1; then
-        echo "fzf is not installed."
-        read "ans?Install fzf with Homebrew? (y/N): "
-        case "$ans" in
-            [yY][eE][sS]|[yY])
-                echo "Installing fzf with brew..."
-                if ! command -v brew >/dev/null 2>&1; then
-                    echo "Homebrew is not installed. Aborting."
+    if [[ "$json_mode" == false ]]; then
+        if ! command -v fzf >/dev/null 2>&1; then
+            echo "fzf is not installed."
+            read "ans?Install fzf with Homebrew? (y/N): "
+            case "$ans" in
+                [yY][eE][sS]|[yY])
+                    echo "Installing fzf with brew..."
+                    if ! command -v brew >/dev/null 2>&1; then
+                        echo "Homebrew is not installed. Aborting."
+                        return 1
+                    fi
+                    brew install fzf || { echo "fzf install failed. Aborting."; return 1; }
+                    ;;
+                *)
+                    echo "Aborted (skipped fzf installation)."
                     return 1
-                fi
-                brew install fzf || { echo "fzf install failed. Aborting."; return 1; }
-                ;;
-            *)
-                echo "Aborted (skipped fzf installation)."
-                return 1
-                ;;
-        esac
+                    ;;
+            esac
+        fi
     fi
 
     # -----------------------------
     # 2. Fetch and prune to sync with remote
     # -----------------------------
-    echo "Fetching and pruning remote..."
+    if [[ "$json_mode" == false ]]; then
+        echo "Fetching and pruning remote..."
+    fi
     git fetch --prune origin 2>/dev/null
 
     # -----------------------------
@@ -85,7 +114,11 @@ EOF
     elif git show-ref --verify --quiet refs/heads/master; then
         base_branch="master"
     else
-        echo "Could not detect 'main' or 'master' locally."
+        if [[ "$json_mode" == false ]]; then
+            echo "Could not detect 'main' or 'master' locally."
+        else
+            echo "[]"
+        fi
         return 1
     fi
 
@@ -103,22 +136,24 @@ EOF
     local remote_branches
     remote_branches=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin | sed 's|^origin/||' | grep -v '^HEAD$')
 
-    # Arrays to hold branches by category (format: timestamp|branch|relative_date)
+    # Arrays to hold branches by category (format: timestamp|branch|relative_date|author_email|author_name)
     local merged_branches=()
     local stale_branches=()
     local recent_branches=()
 
     # Process each local branch
+    {
     while IFS= read -r branch; do
         # Skip base branch
         [[ "$branch" == "$base_branch" ]] && continue
         [[ -z "$branch" ]] && continue
 
-        # Get last commit date for all branches
-        local last_commit_ts
+        # Get last commit info for all branches
+        local last_commit_ts relative_date author_email author_name
         last_commit_ts=$(git log -1 --format='%ct' "$branch" 2>/dev/null)
-        local relative_date
         relative_date=$(git log -1 --format='%cr' "$branch" 2>/dev/null)
+        author_email=$(git log -1 --format='%ae' "$branch" 2>/dev/null)
+        author_name=$(git log -1 --format='%an' "$branch" 2>/dev/null)
         
         # Check if remote branch exists
         local has_remote=false
@@ -130,17 +165,21 @@ EOF
         local configured_upstream
         configured_upstream=$(git config "branch.$branch.remote" 2>/dev/null)
 
+        # Entry format: timestamp|branch|relative_date|author_email|author_name
+        local entry="$last_commit_ts|$branch|$relative_date|$author_email|$author_name"
+
         if [[ "$has_remote" == false && -n "$configured_upstream" ]]; then
             # Had upstream but remote is gone = merged and deleted remotely
-            merged_branches+=("$last_commit_ts|$branch|$relative_date")
+            merged_branches+=("$entry")
         elif [[ -n "$last_commit_ts" && "$last_commit_ts" -lt "$one_week_ago" ]]; then
             # Stale: no commits in 7+ days (pre-select for deletion)
-            stale_branches+=("$last_commit_ts|$branch|$relative_date")
+            stale_branches+=("$entry")
         else
             # Recent: has recent activity (don't pre-select)
-            recent_branches+=("$last_commit_ts|$branch|$relative_date")
+            recent_branches+=("$entry")
         fi
     done < <(git for-each-ref --format='%(refname:short)' refs/heads)
+    } &>/dev/null
 
     # Sort each category by timestamp (most recent first)
     IFS=$'\n' merged_branches=($(printf '%s\n' "${merged_branches[@]}" | sort -t'|' -k1 -rn))
@@ -149,7 +188,55 @@ EOF
     unset IFS
 
     # -----------------------------
-    # 5. Build fzf input with pre-selection markers
+    # 5. JSON mode output
+    # -----------------------------
+    if [[ "$json_mode" == true ]]; then
+        local json_output="["
+        local first=true
+        
+        # Helper function to escape JSON strings
+        _json_escape() {
+            local str="$1"
+            str="${str//\\/\\\\}"
+            str="${str//\"/\\\"}"
+            str="${str//$'\n'/\\n}"
+            str="${str//$'\r'/\\r}"
+            str="${str//$'\t'/\\t}"
+            echo "$str"
+        }
+        
+        # Process all branches for JSON output
+        for entry in "${merged_branches[@]}" "${stale_branches[@]}" "${recent_branches[@]}"; do
+            [[ -z "$entry" ]] && continue
+            
+            local ts=$(echo "$entry" | cut -d'|' -f1)
+            local name=$(echo "$entry" | cut -d'|' -f2)
+            local rel_date=$(echo "$entry" | cut -d'|' -f3)
+            local email=$(echo "$entry" | cut -d'|' -f4)
+            local author=$(echo "$entry" | cut -d'|' -f5)
+            
+            # Escape values for JSON
+            name=$(_json_escape "$name")
+            rel_date=$(_json_escape "$rel_date")
+            email=$(_json_escape "$email")
+            author=$(_json_escape "$author")
+            
+            if [[ "$first" == true ]]; then
+                first=false
+            else
+                json_output+=","
+            fi
+            
+            json_output+="{\"last_change_timestamp\":$ts,\"author_email\":\"$email\",\"author_name\":\"$author\",\"name\":\"$name\",\"last_change_relative\":\"$rel_date\"}"
+        done
+        
+        json_output+="]"
+        echo "$json_output"
+        return 0
+    fi
+
+    # -----------------------------
+    # 6. Build fzf input with pre-selection markers
     # -----------------------------
     local branch_list=""
     local preselect_list=""
@@ -212,7 +299,7 @@ EOF
     echo -e "$preselect_list" > "$preselect_file"
 
     # -----------------------------
-    # 6. Run fzf picker
+    # 7. Run fzf picker
     # -----------------------------
     local total_count=$((${#merged_branches[@]} + ${#stale_branches[@]} + ${#recent_branches[@]}))
     local preselect_count=$((${#merged_branches[@]} + ${#stale_branches[@]}))
@@ -268,7 +355,7 @@ Found $total_count branches ($preselect_count pre-selected for deletion)" \
     fi
 
     # -----------------------------
-    # 7. Extract branch names and confirm deletion
+    # 8. Extract branch names and confirm deletion
     # -----------------------------
     local branches_to_delete=()
     local need_switch=false

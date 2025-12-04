@@ -97,13 +97,14 @@ Merge latest main/master into current branch. Opens merge tool on conflicts.
 ### stale
 
 ```bash
-stale [-m|--my] [FILTER...]
+stale [-m|--my] [--json] [FILTER...]
 ```
 
 List remote branches >3 months old (oldest first). Multi-select with TAB to delete.
 
 - `Ctrl-A` toggles showing all branches
 - `--my` filters by your git username
+- `--json` outputs JSON for scripting (same format as cleanup)
 
 ### stashes
 
@@ -128,7 +129,7 @@ Delete stashes (multi-select with TAB).
 ### cleanup
 
 ```bash
-cleanup
+cleanup [--json]
 ```
 
 Find and delete leftover local branches. Shows all local branches categorized:
@@ -138,6 +139,20 @@ Find and delete leftover local branches. Shows all local branches categorized:
 - **[RECENT]** - Recent activity (not selected)
 
 Switches to main/master first if current branch is selected for deletion.
+
+`--json` outputs non-interactive JSON for scripting:
+
+```json
+[
+  {
+    "last_change_timestamp": 1733123456,
+    "author_email": "dev@example.com",
+    "author_name": "Dev",
+    "name": "feature/old",
+    "last_change_relative": "2 weeks ago"
+  }
+]
+```
 
 ### commits
 

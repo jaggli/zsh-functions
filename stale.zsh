@@ -1,9 +1,15 @@
 stale() {
     # -----------------------------
-    # 0. Check for help flag
+    # 0. Check for help flag and parse options
     # -----------------------------
-    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-        cat << 'EOF'
+    local json_mode=false
+    local my_mode=false
+    local filter_args=()
+    
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+                cat << 'EOF'
 Usage: stale [OPTIONS] [FILTER...]
 
 Show a list of remote branches ordered by last modification date (oldest first).
@@ -15,6 +21,7 @@ Arguments:
 Options:
   -h, --help    Show this help message
   -m, --my      Pre-fill filter with your git username (from git config user.name)
+  --json        Output branch data as JSON (non-interactive)
 
 Features:
   - Lists all remote branches sorted by last commit date (oldest first)
@@ -48,66 +55,91 @@ Examples:
   $ stale Product refactoring
   # Pre-fills fzf filter with "Product refactoring"
 
+  $ stale --json
+  # Output JSON for scripting
+
 Output format:
   <branch-name>                            <relative-date>  <author>
 
 Requirements:
   - Must be in a git repository
-  - fzf (fuzzy finder) - will prompt to install if not found
+  - fzf (fuzzy finder) - will prompt to install if not found (not required for --json)
 
 EOF
-        return 0
-    fi
+                return 0
+                ;;
+            --json)
+                json_mode=true
+                shift
+                ;;
+            -m|--my)
+                my_mode=true
+                shift
+                ;;
+            *)
+                filter_args+=("$1")
+                shift
+                ;;
+        esac
+    done
 
     # -----------------------------
     # 1. Check prerequisites
     # -----------------------------
     if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "Not inside a git repository."
+        if [[ "$json_mode" == true ]]; then
+            echo "[]"
+        else
+            echo "Not inside a git repository."
+        fi
         return 1
     fi
 
-    if ! command -v fzf >/dev/null 2>&1; then
-        echo "fzf is not installed."
+    if [[ "$json_mode" == false ]]; then
+        if ! command -v fzf >/dev/null 2>&1; then
+            echo "fzf is not installed."
 
-        read "ans?Install fzf with Homebrew? (y/N): "
-        case "$ans" in
-            [yY][eE][sS]|[yY])
-                echo "Installing fzf with brew..."
-                if ! command -v brew >/dev/null 2>&1; then
-                    echo "Homebrew is not installed. Aborting."
+            read "ans?Install fzf with Homebrew? (y/N): "
+            case "$ans" in
+                [yY][eE][sS]|[yY])
+                    echo "Installing fzf with brew..."
+                    if ! command -v brew >/dev/null 2>&1; then
+                        echo "Homebrew is not installed. Aborting."
+                        return 1
+                    fi
+                    brew install fzf || { echo "fzf install failed. Aborting."; return 1; }
+                    if [[ -f "$(brew --prefix)/opt/fzf/install" ]]; then
+                        echo "Running fzf install script..."
+                        yes | "$(brew --prefix)/opt/fzf/install"
+                    fi
+                    ;;
+                *)
+                    echo "Aborted (skipped fzf installation)."
                     return 1
-                fi
-                brew install fzf || { echo "fzf install failed. Aborting."; return 1; }
-                if [[ -f "$(brew --prefix)/opt/fzf/install" ]]; then
-                    echo "Running fzf install script..."
-                    yes | "$(brew --prefix)/opt/fzf/install"
-                fi
-                ;;
-            *)
-                echo "Aborted (skipped fzf installation)."
-                return 1
-                ;;
-        esac
+                    ;;
+            esac
+        fi
     fi
 
     # -----------------------------
     # 2. Handle filter (--my flag or arbitrary words)
     # -----------------------------
     local filter=""
-    if [[ "$1" == "-m" || "$1" == "--my" ]]; then
+    if [[ "$my_mode" == true ]]; then
         filter=$(git config user.name)
-        if [[ -z "$filter" ]]; then
+        if [[ -z "$filter" && "$json_mode" == false ]]; then
             echo "Warning: git config user.name is not set."
         fi
-    elif [[ $# -gt 0 ]]; then
-        filter="$*"
+    elif [[ ${#filter_args[@]} -gt 0 ]]; then
+        filter="${filter_args[*]}"
     fi
 
     # -----------------------------
     # 3. Fetch latest from remote
     # -----------------------------
-    echo "Fetching latest from remote..."
+    if [[ "$json_mode" == false ]]; then
+        echo "Fetching latest from remote..."
+    fi
     git fetch --prune origin 2>/dev/null
 
     # -----------------------------
@@ -159,7 +191,61 @@ EOF
         done)
 
     if [[ -z "$all_branch_list" ]]; then
-        echo "No remote branches found."
+        if [[ "$json_mode" == true ]]; then
+            echo "[]"
+        else
+            echo "No remote branches found."
+        fi
+        return 0
+    fi
+
+    # -----------------------------
+    # 5. JSON mode output
+    # -----------------------------
+    if [[ "$json_mode" == true ]]; then
+        local json_output="["
+        local first=true
+        
+        # Helper function to escape JSON strings
+        _json_escape() {
+            local str="$1"
+            str="${str//\\/\\\\}"
+            str="${str//\"/\\\"}"
+            str="${str//$'\n'/\\n}"
+            str="${str//$'\r'/\\r}"
+            str="${str//$'\t'/\\t}"
+            echo "$str"
+        }
+        
+        # Build JSON from stale branches
+        {
+        while IFS='|' read -r branch rel_date author_name author_email timestamp; do
+            [[ -z "$branch" ]] && continue
+            # Only include if older than 3 months
+            if [[ "$timestamp" -lt "$three_months_ago" ]]; then
+                local name="${branch#origin/}"
+                # Remove angle brackets from email
+                author_email="${author_email#<}"
+                author_email="${author_email%>}"
+                
+                # Escape values for JSON
+                name=$(_json_escape "$name")
+                rel_date=$(_json_escape "$rel_date")
+                author_email=$(_json_escape "$author_email")
+                author_name=$(_json_escape "$author_name")
+                
+                if [[ "$first" == true ]]; then
+                    first=false
+                else
+                    json_output+=","
+                fi
+                
+                json_output+="{\"last_change_timestamp\":$timestamp,\"author_email\":\"$author_email\",\"author_name\":\"$author_name\",\"name\":\"$name\",\"last_change_relative\":\"$rel_date\"}"
+            fi
+        done < <(git for-each-ref --sort=committerdate --format='%(refname:short)|%(committerdate:relative)|%(authorname)|%(authoremail)|%(committerdate:unix)' refs/remotes/origin 2>/dev/null | grep -v 'origin/HEAD' | grep -v '^origin$')
+        } &>/dev/null
+        json_output+="]"
+        echo "$json_output"
         return 0
     fi
     
@@ -174,7 +260,7 @@ EOF
     echo "stale" > "$state_file"
 
     # -----------------------------
-    # 5. Run fzf picker with preview
+    # 6. Run fzf picker with preview
     # -----------------------------
     local stale_count=$(echo "$stale_branch_list" | grep -c . || echo "0")
     local all_count=$(echo "$all_branch_list" | grep -c . || echo "0")
@@ -269,7 +355,7 @@ Showing $stale_count stale branches (older than 3 months)" \
     fi
 
     # -----------------------------
-    # 6. Extract branch names and confirm deletion
+    # 7. Extract branch names and confirm deletion
     # -----------------------------
     local branches_to_delete=()
     while IFS= read -r line; do
